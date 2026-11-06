@@ -1,6 +1,6 @@
 # Architecture and implementation notes
 
-This document describes Tonable 0.5.1. It replaces early planning notes with the
+This document describes Tonable 0.5.2. It replaces early planning notes with the
 implemented design. See [tools](tools.md) for the public API and
 [client setup](clients.md) for integration.
 
@@ -79,7 +79,8 @@ Script folder there. The configured library can be outside the default Music
 folder. Offline preset reads resolve symlinks and restrict access to User Library,
 configured Packs and the standard Live 12 Suite Core Library path.
 
-`tonable install` asks an active script to reload command modules. Socket code is
+`tonable install --reload` asks an active script to reload command modules.
+Installation alone only copies files. Socket code is
 not reloaded; changes to it require a Live restart. The installed wheel includes
 the Remote Script source, so normal use does not need the repository checkout.
 

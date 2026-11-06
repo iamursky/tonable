@@ -1,14 +1,14 @@
 # Tonable
 
-![Tonable — connect your assistant to Ableton Live](assets/tonable-logo.svg)
+![Tonable — connect your assistant to Ableton Live](https://raw.githubusercontent.com/iamursky/tonable/v0.5.2/assets/tonable-logo.svg)
 
 Tonable connects a local MCP assistant to **Ableton Live 12.4+**. Read a Live Set,
 load devices and presets, write MIDI notes, shape automation and arrange scenes
 through 24 tools. Tonable runs on your Mac: the assistant starts an MCP server over
 stdio, and a Remote Script executes commands inside Live.
 
-Version **0.5.1**. Earlier development runs exercised the tools in Live **12.4.16**;
-see the [manual checklist](tests/manual_checklist.md) for checks to repeat on your
+Version **0.5.2**. Earlier development runs exercised the tools in Live **12.4.16**;
+see the [manual checklist](https://github.com/iamursky/tonable/blob/v0.5.2/tests/manual_checklist.md) for checks to repeat on your
 installation. Tonable is an independent project, unaffiliated with Ableton AG.
 
 ## What you can do
@@ -22,61 +22,112 @@ installation. Tonable is an independent project, unaffiliated with Ableton AG.
 - Group edits into one undo step with `batch`; inspect `.adg` and `.adv` files
   without opening Live.
 
-See the [tool reference and examples](docs/tools.md) for addresses, arguments and
+See the [tool reference and examples](https://github.com/iamursky/tonable/blob/v0.5.2/docs/tools.md) for addresses, arguments and
 limitations.
 
 ## Requirements
 
-- **macOS**. Installation and library discovery currently use macOS paths;
-  Windows and Linux are not supported by the installer.
+- **macOS** for the validated Live workflow. The installer recognizes macOS and
+  Windows library locations and accepts an explicit path on any OS. Windows
+  discovery is unit-tested; end-to-end Live support on Windows is unverified.
+  Preset discovery still uses macOS Core Library paths.
 - **Ableton Live 12.4 or newer**, installed and started at least once. Devices and
   presets must be available in your Live edition and installed packs. Max for Live
   is only needed for devices that require it.
-- **Python 3.11+** and [uv](https://docs.astral.sh/uv/).
+- [uv](https://docs.astral.sh/uv/) with Python **3.11+**. The commands below ask uv
+  to provide Python 3.11 if needed; no separate Python setup is required.
 - A local MCP client that can launch a **stdio** process under the same macOS user
   as Live. Client accounts and subscriptions are separate from Tonable.
 
-## Install from this repository
+## Install without a checkout
 
-Download or clone the repository, open a terminal in its root, then run:
+Get the wheel, source archive and SHA-256 checksums from the
+[GitHub release](https://github.com/iamursky/tonable/releases/tag/v0.5.2).
+CI builds and checks each release before publishing its files. You can run the
+versioned wheel URL directly, without cloning the repository:
+
 
 ```sh
-uv sync --locked
-uv run tonable install
+uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.5.2/tonable-0.5.2-py3-none-any.whl tonable libraries
+uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.5.2/tonable-0.5.2-py3-none-any.whl tonable install
 ```
 
-The installer reads Live's newest preferences and copies the Remote Script into
-`<User Library>/Remote Scripts/Tonable`. It falls back to
-`~/Music/Ableton/User Library` when no configured library is found.
+The installer lists existing libraries found in Live's preferences. If there are
+several, select one; then confirm the displayed path. It only offers the existing
+OS default when no configured path is known. An unavailable configured path is
+reported; reconnect its drive or pass a verified path explicitly. The installer
+never creates a guessed library. In unattended use, supply `--user-library PATH`; `--yes` can confirm a
+single detected candidate but cannot resolve ambiguity.
 
-1. Restart Live after the first install.
-2. Open **Settings → Link, Tempo & MIDI → Control Surface** and choose **Tonable**.
-   Leave Input and Output set to **None**.
-3. Run `uv run tonable doctor`. All checks should show `OK`.
-
-For a persistent command independent of the checkout, install the local package:
+To check a specific destination before copying, use the **User Library root**
+from Live's **Settings → Library**, not the `Remote Scripts` folder:
 
 ```sh
-uv tool install .
+uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.5.2/tonable-0.5.2-py3-none-any.whl tonable install \
+  --user-library "/path/to/User Library" --dry-run
+```
+
+Remove `--dry-run` to install. An explicit path can create a new library folder,
+which is also useful for staging. Files are copied from the package into
+`<User Library>/Remote Scripts/Tonable`. Existing Tonable files require
+`--replace`; other Remote Scripts stay in place. Symlinked script destinations
+are refused. Copying is staged before replacement. The installer does not change
+Live preferences, select a Control Surface or contact Live unless you add
+`--reload`. Close Live before replacing a component for a release check.
+
+1. Restart Live after installing.
+2. Open **Settings → Link, Tempo & MIDI → Control Surface** and choose **Tonable**.
+   Leave Input and Output set to **None**.
+3. Run `tonable doctor` using the persistent install below, or run `doctor` through
+   the same `uvx --from ... tonable` command. For a custom library, pass
+   `--user-library "/path/to/User Library"`. All checks should show `OK`.
+
+For a persistent CLI, independent of both the checkout and the wheel's location:
+
+```sh
+uv tool install --python 3.11 https://github.com/iamursky/tonable/releases/download/v0.5.2/tonable-0.5.2-py3-none-any.whl
 uv tool dir --bin
 ```
 
-Use the `tonable` executable in that bin directory when configuring your client.
-Do not assume a package with this name on a public registry is this project.
+Use the `tonable` executable in that bin directory for setup and client commands.
+You can replace the URL with an absolute path to a downloaded wheel. For `uvx`,
+keep a local wheel at the configured path: its environment may need to be rebuilt.
+See the [official uv tools guide](https://docs.astral.sh/uv/guides/tools/) for tool
+isolation.
+
+PyPI publication uses a separate Trusted Publishing job. Once version 0.5.2 is
+listed on [the project's PyPI page](https://pypi.org/project/tonable/0.5.2/), you
+can use a pinned registry source:
+
+```sh
+uvx --python 3.11 --from 'tonable==0.5.2' tonable install
+uvx --python 3.11 --from 'tonable==0.5.2' tonable serve
+```
+
+The release workflow verifies the registry upload, file hashes and tool discovery.
+If PyPI publication has not succeeded, use the GitHub wheel URL above.
+
+### Install from source for development
+
+```sh
+uv sync --locked
+uv run tonable install --dry-run
+uv run tonable install
+```
 
 ## Connect an assistant
 
 Tonable exposes MCP over **stdio only**. Use the local setup for your client:
 
-- [Codex CLI and IDE extension](docs/clients.md#codex)
-- [Claude Code](docs/clients.md#claude-code)
-- [Claude Desktop](docs/clients.md#claude-desktop)
-- [Other local MCP clients](docs/clients.md#other-local-mcp-clients)
+- [Codex CLI and IDE extension](https://github.com/iamursky/tonable/blob/v0.5.2/docs/clients.md#codex)
+- [Claude Code](https://github.com/iamursky/tonable/blob/v0.5.2/docs/clients.md#claude-code)
+- [Claude Desktop](https://github.com/iamursky/tonable/blob/v0.5.2/docs/clients.md#claude-desktop)
+- [Other local MCP clients](https://github.com/iamursky/tonable/blob/v0.5.2/docs/clients.md#other-local-mcp-clients)
 
 The examples follow official client documentation. They describe a compatible
 transport; they do not certify every client version. Tonable has no HTTP/SSE
 endpoint or hosted connector. The private loopback socket inside Live is not an
-MCP URL. See [client setup](docs/clients.md) for sources and verification steps.
+MCP URL. See [client setup](https://github.com/iamursky/tonable/blob/v0.5.2/docs/clients.md) for sources and verification steps.
 
 Start with a read-only request:
 
@@ -92,22 +143,25 @@ read the current addresses before editing; track and device indices can change.
 
 ## Updates and removal
 
-After updating the checkout:
+Obtain the new trusted wheel, close Live, and replace the persistent package:
 
 ```sh
-uv sync --locked
-uv tool install --force .
-tonable install
+uv tool install --force --python 3.11 /absolute/path/to/new-tonable.whl
+tonable install --replace
 tonable doctor
 ```
 
-An active Remote Script from version 0.3.0 onward can reload command modules
-without restarting Live. Restart Live for socket-layer changes, or when reload
-fails. Reconnect the MCP server or restart the client session to refresh its tools.
+Restart Live before running `doctor`, then reconnect the MCP server so the client
+refreshes its tools. For an existing component from 0.3.0 onward,
+`tonable install --replace --reload` can request a command-module reload. It does
+not replace a restart for socket-layer changes or a failed reload. With a `uvx`
+client configuration, update its wheel path as well.
 
-To remove Tonable, run `tonable uninstall`, set its Control Surface slot to
-**None**, and remove the MCP entry from your client. If installed with uv, run
-`uv tool uninstall tonable`.
+To remove the component, run `tonable uninstall`, confirm the library and removal,
+then set its Control Surface slot to **None** and remove the MCP client entry.
+For unattended removal, use `tonable uninstall --user-library PATH --yes`.
+`--dry-run` previews removal. To remove the persistent CLI, use
+`uv tool uninstall tonable`. Runtime reports and `~/.tonable` are left in place.
 
 ## Data and editing behavior
 
@@ -130,21 +184,24 @@ uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv build
+uv run python scripts/check_distribution.py \
+  --wheel dist/tonable-0.5.2-py3-none-any.whl \
+  --sdist dist/tonable-0.5.2.tar.gz --python 3.11
 ```
 
 Tests use a fake Live API and local loopback sockets. They do not prove audio
-quality or replace [checks inside Live](tests/manual_checklist.md). The optional
-[Live API probe](probe/README.md) is developer diagnostics; normal installation
+quality or replace [checks inside Live](https://github.com/iamursky/tonable/blob/v0.5.2/tests/manual_checklist.md). The optional
+[Live API probe](https://github.com/iamursky/tonable/blob/v0.5.2/probe/README.md) is developer diagnostics; normal installation
 does not need it and the installed wheel excludes it.
 
-See [architecture](docs/plan.md) and [publication checks](docs/publishing.md).
+See [architecture](https://github.com/iamursky/tonable/blob/v0.5.2/docs/plan.md) and [publication checks](https://github.com/iamursky/tonable/blob/v0.5.2/docs/publishing.md).
 
 ## Acknowledgments and license
 
 Tonable draws on techniques from
 [ableton-live-mcp](https://github.com/wstierhout/ableton-live-mcp) and
 [Producer Pal](https://github.com/adamjmurray/producer-pal). Attribution and their
-MIT notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT notices are in [THIRD_PARTY_NOTICES.md](https://github.com/iamursky/tonable/blob/v0.5.2/THIRD_PARTY_NOTICES.md).
 
-Tonable is licensed under [MIT](LICENSE), © 2026 Ilya Amursky. Ableton software and
+Tonable is licensed under [MIT](https://github.com/iamursky/tonable/blob/v0.5.2/LICENSE), © 2026 Ilya Amursky. Ableton software and
 content are not included and remain subject to their own licenses.

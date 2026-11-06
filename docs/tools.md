@@ -1,6 +1,6 @@
 # Tonable tools
 
-Tonable 0.5.1 exposes 24 MCP tools. Use `live_status` first, then read the target
+Tonable 0.5.2 exposes 24 MCP tools. Use `live_status` first, then read the target
 before editing it. Tool descriptions and input schemas provide the full argument
 lists. Most edits form one Live undo step; `batch` groups several edits into one.
 Undo history is shared with every person and controller working in the Set.

@@ -6,9 +6,12 @@ else controlling Live: its undo history is shared.
 
 ## Setup
 
-1. Install the package with `uv tool install --force .`, then run
-   `tonable install` and `tonable doctor`. Restart Live when the socket code
-   changes; otherwise command reload is available from version 0.3.0.
+1. Close Live. Install the approved wheel with
+   `uv tool install --force --python 3.11 /absolute/path/to/tonable.whl`.
+   Run `tonable install --replace --dry-run`, confirm the User Library path,
+   then run `tonable install --replace`. Restart Live, select Tonable as a Control
+   Surface (Input and Output: None), and run `tonable doctor`. For a custom
+   library, pass `--user-library PATH` to installation and doctor.
 2. Reconnect Tonable in your MCP client so it discovers the current 24 tools.
 3. Call `live_status` and `read_set`; compare the result with Live.
 

@@ -43,7 +43,7 @@ def allowed_folders():
             preferred = root.find(".//PreferredFactoryPacksInstallationPath")
             if preferred is not None and preferred.get("Value"):
                 folders.append(Path(preferred.get("Value")))
-    return [Path(os.path.realpath(f)) for f in folders]
+    return [Path(os.path.realpath(f)) for f in folders if f is not None]
 
 
 def inspect(path, folders=None):
