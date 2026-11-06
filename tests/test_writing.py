@@ -12,7 +12,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "remote_script"))
 
 import fake_live  # noqa: E402
-
 from Tonable import clips, dispatch, edit, library, params, song  # noqa: E402
 from Tonable.server import CommandError  # noqa: E402
 

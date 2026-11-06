@@ -47,6 +47,10 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
 
+[tool.ruff.lint.isort]
+# Explicit names keep discovery identical on case-sensitive and macOS filesystems.
+known-first-party = ["tonable", "Tonable", "fake_live"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
