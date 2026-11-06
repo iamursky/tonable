@@ -1,0 +1,63 @@
+[project]
+name = "tonable"
+version = "0.5.1"
+description = "MCP server for Ableton Live 12: presets, devices, clips, envelopes and scenes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{ name = "Ilya Amursky" }]
+keywords = ["ableton-live", "mcp", "midi", "music", "automation"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Multimedia :: Sound/Audio :: MIDI",
+]
+dependencies = ["mcp>=1.20,<2"]
+
+[project.scripts]
+tonable = "tonable.__main__:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tonable"]
+
+# `tonable install` copies this folder into Live's User Library.
+[tool.hatch.build.targets.wheel.force-include]
+"remote_script/Tonable" = "tonable/remote_script/Tonable"
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# Source archives use an allowlist so local experiments and runtime data stay out.
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/remote_script",
+  "/tests",
+  "/probe",
+  "/docs",
+  "/assets",
+  "/README.md",
+  "/LICENSE",
+  "/THIRD_PARTY_NOTICES.md",
+  "/pyproject.toml",
+  "/uv.lock",
+]
+# Bytecode and runtime data are never source distribution inputs.
+exclude = ["**/__pycache__", "**/*.pyc"]

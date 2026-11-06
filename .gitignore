@@ -1,0 +1,39 @@
+.DS_Store
+local/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+dist/
+
+# Python build and coverage artifacts
+build/
+*.egg-info/
+*.py[cod]
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Local credentials, runtime discovery and diagnostic output
+.env
+.env.*
+!.env.example
+.tonable/
+session.json
+probe-report*.json
+*.log
+*.pem
+*.key
+
+# Machine-specific assistant configuration
+.mcp.json
+.codex/
+.claude/
+
+# Local Ableton projects and licensed content
+*.als
+*.alc
+*.adg
+*.adv
+*.alp
