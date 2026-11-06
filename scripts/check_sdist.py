@@ -34,7 +34,7 @@ def main():
         }
         for command in (
             ["uv", "sync", "--locked", "--python", args.python],
-            ["uv", "run", "--locked", "pytest"],
+            ["uv", "run", "--locked", "--python", args.python, "pytest"],
         ):
             subprocess.run(
                 command, cwd=projects[0].parent, env=env, check=True, timeout=180
