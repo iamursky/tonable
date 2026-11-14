@@ -87,7 +87,7 @@ def test_a_silent_revert_is_reported_not_hidden():
 
     obj = Stubborn(launch_mode=0)
     line = props.write(obj, TABLE, {"mode": "Gate"})[0]
-    assert "Live kept" in line["error"] and line["now"] == "Trigger"
+    assert "Live still shows" in line["error"] and line["now"] == "Trigger"
 
 
 def test_a_value_snapped_to_a_step_is_a_note_not_an_error():
@@ -132,3 +132,30 @@ def test_describe_lists_options_and_ranges():
     assert described["mode"]["options"] == list(MODES)
     assert described["gain"]["range"] == "0 to 1"
     assert described["length"]["readonly"] is True
+
+
+def test_an_enum_class_as_the_choices_list():
+    """Live's mixer lists its choices as a class with a `values` map, not a list."""
+
+    class Member:
+        def __init__(self, name):
+            self.name = name
+
+    class Assignments:  # stands in for a Boost.Python enum class
+        values = {0: Member("A"), 1: Member("NONE"), 2: Member("B")}
+
+    table = [
+        props.prop("x", "assign", "enum", choices={"A": 0}, choices_attr="assigns")
+    ]
+    obj = SimpleNamespace(assign=1, assigns=Assignments)
+    assert props.read(obj, table) == {"x": "NONE"}
+    assert props.write(obj, table, {"x": "b"}) == [{"field": "x", "now": "B"}]
+    assert obj.assign == 2
+
+
+def test_an_unreadable_choices_list_falls_back_to_the_built_in_labels():
+    table = [
+        props.prop("x", "assign", "enum", choices={"A": 0, "B": 1}, choices_attr="l")
+    ]
+    obj = SimpleNamespace(assign=0, l=object())  # not iterable, not a class
+    assert props.write(obj, table, {"x": "B"}) == [{"field": "x", "now": "B"}]

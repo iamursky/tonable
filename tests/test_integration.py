@@ -87,7 +87,7 @@ def test_every_command_has_a_tool():
 
 
 def test_update_set_arguments_reach_the_command(live):
-    out = run_tool("update_set", record="true", count_in="1 Bar", tempo="100")
+    out = run_tool("update_set", record="true", punch_in="true", tempo="100")
     assert live.tempo == 100.0 and live.record_mode is True
     assert "tempo" in out["changed"] and "record" in out["changed"]
 

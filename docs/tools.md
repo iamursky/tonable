@@ -5,11 +5,13 @@ before editing it. Tool descriptions and input schemas provide the full argument
 lists. Most edits form one Live undo step; `batch` groups several edits into one.
 Undo history is shared with every person and controller working in the Set.
 
-**Status of the 0.6 additions.** Items marked *new* were added in 0.6.0 and have run
-only against a stand-in for Live's API. Live silently keeps the old value for many
-invalid writes, so every write is read back and answered as a result line with what
-Live now holds (`now`), or an `error` when it kept the old value. Check the
-[manual checklist](../tests/manual_checklist.md) in a disposable Set first.
+**Status of the 0.6 additions.** Items marked *new* were added in 0.6.0. On 14 November
+2026 most of them were run in Live 12.4.16 (Suite, macOS) in a disposable Set; the
+exceptions are listed in the [manual checklist](../tests/manual_checklist.md). Not run in
+Live: `tap_tempo`, `trigger_session_record` and `capture_midi` with recorded MIDI, `link`, `convert_audio` `slices_to_drum_rack` / `pad_to_track` / `move_devices_to_drum_rack`, Looper recording, `copy_pad` and `insert_chain`, Simpler sample actions that change content, `app` scroll, zoom, browse and preview, and audio-track channel routing. Launch mode and quantization labels follow the Object Model and were
+read back through the same table, so confirm one visually in Live. Live silently keeps
+the old value for many invalid writes, so every write is read back and answered as a
+result line with what Live now holds (`now`), or an `error` when it did not take it.
 
 ## Addresses and time
 
@@ -36,7 +38,7 @@ Read addresses again after inserting, moving or deleting objects.
 |---|---|
 | `live_status` | Connection, versions, tempo and Set dimensions |
 | `read_set` | Tracks, returns, scenes and clips, locators and loop; *new:* recording and quantization settings and Set facts (length, position, what can be undone) |
-| `update_set` | Tempo, time signature, loop, metronome, scale; *new:* record, overdub, session record, automation arm, punch in/out, count-in, launch and record quantization, groove and swing amount, scale mode, select-on-launch, exclusive arm/solo, Link |
+| `update_set` | Tempo, time signature, loop, metronome, scale; *new:* record, overdub, session record, automation arm, punch in/out, launch and record quantization, groove and swing amount, scale mode, select-on-launch, exclusive arm/solo, Link |
 | `transport` | Start, stop, continue, launch clips or scenes, stop a track, jump, restore automation; *new:* `stop_clip`, `jump_by`, `next_locator`, `previous_locator`, `jump_in_clip`, `play_selection`, `tap_tempo`, `capture_midi`, `trigger_session_record`, `back_to_arranger` |
 | `undo` | Undo or redo a step in the shared Live history |
 | `scene` | Create, rename, set color, tempo or *new:* time signature, duplicate, capture playing clips |
@@ -85,7 +87,7 @@ not from a probe.
 | `read_clip` | Read a clip (`track` + `slot`, or `clip` `t0/s2` / `t0/a1`) with loop, settings and all MIDI notes; audio clips add file, warp and markers |
 | `write_clip` | Create or update a MIDI clip (also a timeline clip), replacing or adding notes; notes may carry *new:* `probability`, `velocity_deviation`, `release_velocity` |
 | `edit_notes` | Delete, transpose, shift, quantize, set velocity or length, *new:* mute, unmute, probability, velocity deviation, release velocity |
-| `update_clip` | *New.* Name, color, mute, loop and markers, time signature, launch mode and quantization, legato, follow actions, groove, stop button; audio warping, warp mode, gain, pitch; actions fire, stop, crop, duplicate loop, quantize, clear envelopes, move playing position, warp markers |
+| `update_clip` | *New.* Name, color, mute, loop and markers, time signature, launch mode and quantization, legato, clip scale, groove, stop button; audio warping, warp mode, gain, pitch; actions fire, stop, crop, duplicate loop, quantize, clear envelopes, move playing position, warp markers |
 | `create_audio_clip` | *New.* Put an audio file on an audio track, in a Session slot or at a bar |
 | `convert_audio` | *New.* Audio to MIDI (drums, melody, harmony), to Simpler, to Drum Rack, slices to Drum Rack, pad to track |
 | `read_envelope` | Read parameter automation points from a Session clip |
@@ -200,11 +202,14 @@ Write a volume ramp with `write_envelope`:
   Live's Python API. `read_track` shows whether a track is frozen.
 - Live cannot create or remove grooves or tuning systems, or clear a clip's groove.
   Group tracks cannot be created from a script; an existing group can be folded.
+- A track's monitoring state is not part of Live's undo history: `undo` does not
+  bring it back. Everything else Tonable writes is, and a `batch` is one step.
 - `app` never presses a dialog button, and selection or view changes are not undo
   steps. Conversions in `convert_audio` finish a moment after the answer: call
   `read_set` to find the new track.
 - `move_clip` copies and deletes, so it refuses a new place that overlaps the clip's
   own span, and the copy replaces timeline clips under its new span.
-- Members that older Live versions lack (take lanes, some follow-action fields,
-  Link, `capture_midi`) answer with a "this Live does not have it" line, not an
+- Clip follow actions are not exposed by Live 12.4.16's Python API (neither on the
+  clip nor on the slot), so Tonable cannot read or set them.
+- Members that older Live versions lack (take lanes, Link, `capture_midi`) answer with a "this Live does not have it" line, not an
   error that stops the other fields.

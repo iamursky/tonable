@@ -76,7 +76,7 @@ def update_track(
     output_channel: text("Output channel by the name Live shows, e.g. 1/2.") = "",
     monitoring: text("Monitoring: In, Auto or Off.") = "",
     crossfade: text("Crossfader assignment: A, None or B.") = "",
-    panning_mode: text("Stereo or Split Stereo.") = "",
+    panning_mode: text("stereo or stereo_split.") = "",
     pan_left: text("Split stereo: left pan, like pan (e.g. 25L).") = "",
     pan_right: text("Split stereo: right pan, like pan (e.g. 30R).") = "",
     folded: text("Group track: true folds it, false opens it.") = "",

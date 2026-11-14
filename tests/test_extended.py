@@ -52,6 +52,31 @@ def test_new_commands_are_in_the_table():
         assert name in commands
 
 
+def test_undo_step_flushes_parameter_writes_before_it_closes():
+    """Live 12.4 applies parameter and Set-property writes a moment late; unless they
+    are flushed first they land after the step closes and need a second undo."""
+    order = []
+    fake = SimpleNamespace(
+        begin_undo_step=lambda: order.append("begin"),
+        sync_parameter_changes=lambda: order.append("sync"),
+        end_undo_step=lambda: order.append("end"),
+    )
+    with song.undo_step(fake), song.undo_step(fake):
+        order.append("work")
+    assert order == ["begin", "work", "sync", "end"]
+
+
+def test_undo_step_works_on_a_live_without_sync():
+    order = []
+    fake = SimpleNamespace(
+        begin_undo_step=lambda: order.append("begin"),
+        end_undo_step=lambda: order.append("end"),
+    )
+    with song.undo_step(fake):
+        pass
+    assert order == ["begin", "end"]
+
+
 # --- the Set ---------------------------------------------------------------------
 
 
@@ -75,6 +100,7 @@ def settable_song(**over):
         groove_amount=0.0,
         clip_trigger_quantization=4,
         count_in_duration=0,
+        midi_recording_quantization=0,
         can_capture_midi=True,
         can_undo=True,
         can_redo=False,
@@ -93,20 +119,20 @@ def test_update_set_writes_recording_state_and_reads_it_back():
             "record": "true",
             "overdub": True,
             "clip_trigger_quantization": "1/4",
-            "count_in": "2 Bars",
+            "midi_recording_quantization": "1/16",
             "groove_amount": 0.5,
         },
     )
     assert s.record_mode is True and s.arrangement_overdub is True
-    assert s.clip_trigger_quantization == 7 and s.count_in_duration == 2
+    assert s.clip_trigger_quantization == 7 and s.midi_recording_quantization == 5
     assert set(out["changed"]) == {
         "record",
         "overdub",
         "clip_trigger_quantization",
-        "count_in",
+        "midi_recording_quantization",
         "groove_amount",
     }
-    assert out["settings"]["count_in"] == "2 Bars"
+    assert out["settings"]["midi_recording_quantization"] == "1/16"
     assert s.undo_steps == 1
 
 
@@ -413,8 +439,9 @@ class FullClip(fake_live.MidiClip):
         self.launch_quantization = 0
         self.legato = False
         self.velocity_amount = 0.0
-        self.follow_action_a = 0
-        self.follow_action_probability = 1.0
+        self.scale_mode = False
+        self.root_note = 0
+        self.scale_name = "Major"
         self.signature_numerator = 4
         self.signature_denominator = 4
         self.calls = []
@@ -446,8 +473,8 @@ class AudioClip(FullClip):
         self.sample_rate = 44100
         self.warp_markers = [Warp(0.0, 0.0), Warp(8.0, 4.0)]
 
-    def add_warp_marker(self, beat, sample=None):
-        self.warp_markers.append(Warp(beat, sample if sample is not None else 1.0))
+    def add_warp_marker(self, marker):
+        self.warp_markers.append(Warp(marker.beat_time, marker.sample_time))
 
     def remove_warp_marker(self, beat):
         self.warp_markers = [m for m in self.warp_markers if m.beat_time != beat]
@@ -471,13 +498,18 @@ def test_update_clip_settings_with_read_back():
             "launch_mode": "gate",
             "launch_quantization": "1 Bar",
             "legato": True,
-            "follow_action_a": "Next",
+            "scale_name": "Minor",
+            "root_note": 9,
             "time_signature": "3/4",
         },
     )
     assert clip.name == "Hook" and clip.muted is True
     assert clip.launch_mode == 1 and clip.launch_quantization == 5
-    assert clip.follow_action_a == 4 and clip.signature_numerator == 3
+    assert (
+        clip.scale_name == "Minor"
+        and clip.root_note == 9
+        and clip.signature_numerator == 3
+    )
     shown = out["settings"]
     assert shown["launch_mode"] == "Gate" and shown["time_signature"] == "3/4"
     assert s.undo_steps == 1
@@ -544,7 +576,14 @@ def test_stop_button_works_on_an_empty_slot():
     assert out["results"] == [{"field": "stop_button", "now": False}]
 
 
-def test_audio_clip_warp_settings_and_markers():
+def test_audio_clip_warp_settings_and_markers(monkeypatch):
+    class Marker:  # Live's Clip.WarpMarker takes names, not an order
+        def __init__(self, sample_time, beat_time):
+            self.sample_time, self.beat_time = sample_time, beat_time
+
+    monkeypatch.setattr(
+        clipprops, "Live", SimpleNamespace(Clip=SimpleNamespace(WarpMarker=Marker))
+    )
     clip = AudioClip()
     s = song_with(clip)
     out = clipprops.update_clip(
@@ -558,6 +597,8 @@ def test_audio_clip_warp_settings_and_markers():
     )
     markers = added["results"][0]["audio"]["warp_markers"]
     assert [m["beat_time"] for m in markers] == [0.0, 8.0, 4.0]
+    # no sample_time given: placed between its neighbours (beat 4 of 0..8 -> 2 s)
+    assert markers[-1]["sample_time"] == 2.0
     assert out["settings"]["warp_mode"] == "Complex"
 
 

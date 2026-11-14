@@ -40,16 +40,25 @@ else controlling Live: its undo history is shared.
 
 ## Checks for the 0.6 additions
 
-None of these has run in Live yet; they were written against a stand-in. For every
-write, compare the `now` value in the answer with what Live shows, and treat any
-`error` line saying Live kept the old value as a finding, not a failure of the check.
+Run in Live 12.4.16 (Suite, macOS, a disposable Set) on 14 November 2026: everything
+below except `tap_tempo`, `trigger_session_record` and `capture_midi` with recorded MIDI, `link`, `convert_audio` `slices_to_drum_rack` / `pad_to_track` / `move_devices_to_drum_rack`, Looper recording, `copy_pad` and `insert_chain`, Simpler sample actions that change content, `app` scroll, zoom, browse and preview, and audio-track channel routing. That run found and fixed: Live's classes report their module
+as `Song`, `Track` and so on (not `Live.*`); the mixer's choice lists are enum classes;
+Clip has no follow-action members in this Live; `count_in_duration` has no setter;
+`punch_in` and similar Song writes show up after `sync_parameter_changes`; Live's
+`add_warp_marker` needs a `Clip.WarpMarker` built with named arguments; and a `batch`
+needed the same flush to be one undo step. Repeat it after Live upgrades.
+
+For every write, compare the `now` value in the answer with what Live shows, and treat
+any `error` line saying Live did not take the value as a finding, not a failure of the check.
+Also look at one clip in Live: its launch mode, launch quantization and legato must match
+what `update_clip` reported.
 
 - `live_api`: `info` on `song`. If it answers `not a Live object`, the assumption
   that Live's classes report a module starting with `Live` is wrong; record the
   module name from `live_api` `info`. Then `get` `tempo`; `set` without `write`
   must be refused; `set` with `write: true` and `call` of a `delete_*` method
   without `confirm` must be refused.
-- `update_set`: `record`, `overdub`, `count_in`, `clip_trigger_quantization`,
+- `update_set`: `record`, `overdub`, `punch_in`, `clip_trigger_quantization`,
   `midi_recording_quantization`, `groove_amount`. Check that each label maps to the
   value Live shows (the numbers are from memory of the Object Model).
 - `transport`: `jump_by` (negative too), `next_locator`, `previous_locator`,
@@ -62,7 +71,7 @@ write, compare the `now` value in the answer with what Live shows, and treat any
 - `write_clip` with `probability`, `velocity_deviation` and `release_velocity`;
   `read_clip` returns them; `edit_notes` `probability`, `mute`, `unmute`.
 - `update_clip` on a MIDI and an audio clip: launch mode and quantization labels,
-  all follow-action fields (which exist depends on the Live version), loop and
+  loop and
   marker changes in both orders, `time_signature`, `groove` (after `groove` list),
   `warp_mode` (an unavailable mode must be refused), `gain`, `pitch_coarse`,
   actions `quantize`, `crop`, `clear_envelopes`, and warp marker add, move, remove.

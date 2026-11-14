@@ -104,7 +104,7 @@ ClipName = Annotated[
 def read_clip(track: TrackOrNone = "", slot: Slot = "", clip: ClipAddress = "") -> dict:
     """A clip, Session (track + slot, or clip t0/s2) or timeline (clip t0/a1): name,
     length, loop, and under settings its color, mute, markers, launch mode and
-    quantization, legato, follow actions, time signature and groove. An audio clip
+    quantization, legato, scale, time signature and groove. An audio clip
     adds its file, warp mode, gain, pitch and warp markers. A MIDI clip lists every
     note with pitch name and number, start and length in beats, velocity, and (when
     not default) probability, velocity deviation and release velocity.

@@ -53,11 +53,30 @@ def get(obj, name, default=None):
 
 
 def choices(obj, p):
-    """[(label, value)] for an enum row, from the object when it lists them."""
+    """[(label, value)] for an enum row, from the object when it lists them.
+
+    Live gives these lists in two shapes: a list of labels (index = value), and, for
+    the mixer, a Boost.Python enum class whose `values` map numbers to members. Any
+    other shape, or a failure reading it, falls back to the row's own choices."""
     listed = get(obj, p.choices_attr, None) if p.choices_attr else None
-    if listed:
+    found = _listed_labels(listed)
+    return found if found else list((p.choices or {}).items())
+
+
+def _listed_labels(listed):
+    if listed is None:
+        return []
+    try:
+        if isinstance(listed, type):
+            values = getattr(listed, "values", None)
+            if not isinstance(values, dict):
+                return []
+            return [
+                (str(getattr(v, "name", v)), int(k)) for k, v in sorted(values.items())
+            ]
         return [(str(label), i) for i, label in enumerate(listed)]
-    return list((p.choices or {}).items())
+    except Exception:
+        return []
 
 
 def shown(obj, p, raw):
@@ -90,7 +109,7 @@ def read(obj, table, only=None):
 # --- writing ---------------------------------------------------------------------
 
 
-def write(obj, table, params):
+def write(obj, table, params, sync=None):
     """Write every property of `table` that `params` names, one result line each.
 
     A line is {"field", "now"} or {"field", "error"}; "note" says when Live held a
@@ -101,11 +120,11 @@ def write(obj, table, params):
     for p in table:
         if not given(params, p.name):
             continue
-        results.append(write_one(obj, p, params[p.name]))
+        results.append(write_one(obj, p, params[p.name], sync))
     return results
 
 
-def write_one(obj, p, requested):
+def write_one(obj, p, requested, sync=None):
     if p.readonly:
         return {"field": p.name, "error": "read-only"}
     if get(obj, p.attr, None) is None:
@@ -119,6 +138,14 @@ def write_one(obj, p, requested):
     except Exception as err:
         return {"field": p.name, "error": _why(err)}
     now_raw = get(obj, p.attr, value)
+    if not same(p, now_raw, value) and sync is not None:
+        # Some Song properties only show a new value after Live has processed the
+        # change (Song.sync_parameter_changes, new in Live 12.4).
+        try:
+            sync()
+        except Exception:
+            pass
+        now_raw = get(obj, p.attr, value)
     now = shown(obj, p, now_raw)
     out = {"field": p.name, "now": now}
     if not same(p, now_raw, value):
@@ -130,7 +157,10 @@ def write_one(obj, p, requested):
             return {
                 "field": p.name,
                 "now": now,
-                "error": f"Live kept {now!r} and did not accept {requested!r}",
+                "error": (
+                    f"Live still shows {now!r} after the write of {requested!r}: it "
+                    "either refused it or applies it a moment later; read it again"
+                ),
             }
     return out
 

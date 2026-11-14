@@ -79,7 +79,6 @@ SET_PROPS = [
         "enum",
         choices=RECORD_QUANTIZATION,
     ),
-    props.prop("count_in", "count_in_duration", "enum", choices=COUNT_IN),
     props.prop("scale_mode", "scale_mode", "bool"),
     props.prop("select_on_launch", "select_on_launch", "bool"),
     props.prop("exclusive_arm", "exclusive_arm", "bool"),
@@ -91,6 +90,10 @@ SET_PROPS = [
 ]
 # What Live reports about the Set but does not let a script change.
 SET_FACTS = [
+    # Live's Python API has no setter for the count-in length.
+    props.prop(
+        "count_in", "count_in_duration", "enum", choices=COUNT_IN, readonly=True
+    ),
     props.prop("song_length_beats", "song_length", "float", readonly=True),
     props.prop("last_event_beats", "last_event_time", "float", readonly=True),
     props.prop("position_beats", "current_song_time", "float", readonly=True),
@@ -124,6 +127,14 @@ class undo_step:
     def __exit__(self, *exc):
         undo_step.depth -= 1
         if undo_step.depth == 0:
+            # Parameter and Set-property writes reach Live a moment late; without
+            # this they land after the step closes and become a step of their own.
+            sync = getattr(self._song, "sync_parameter_changes", None)
+            if sync is not None:
+                try:
+                    sync()
+                except Exception:
+                    pass
             end = getattr(self._song, "end_undo_step", None)
             if end is not None:
                 end()
@@ -249,7 +260,9 @@ def update_set(song, params):
         if _given(params, "scale"):
             song.scale_name = str(params["scale"]).strip()
             changed.append("scale")
-        results = props.write(song, SET_PROPS, params)
+        results = props.write(
+            song, SET_PROPS, params, getattr(song, "sync_parameter_changes", None)
+        )
     changed.extend(r["field"] for r in results if "error" not in r)
     if not changed and not results:
         raise CommandError("bad_params", "nothing to change: give at least one field")

@@ -75,7 +75,6 @@ def update_set(
         "Record quantization: None, 1/4, 1/8, 1/8T, 1/8 + 1/8T, 1/16, 1/16T, "
         "1/16 + 1/16T, 1/32."
     ) = "",
-    count_in: text("Count-in before recording: None, 1 Bar, 2 Bars, 4 Bars.") = "",
     select_on_launch: text("Select a clip when it is launched: true / false.") = "",
     exclusive_arm: text("Arming one track disarms the others: true / false.") = "",
     exclusive_solo: text("Soloing one track unsolos the others: true / false.") = "",
@@ -83,7 +82,7 @@ def update_set(
     link_start_stop_sync: text("Link start/stop sync: true / false.") = "",
 ) -> dict:
     """Change the Set's tempo, time signature, Arrangement loop, metronome, key,
-    recording state (record, overdub, session record, punch, count-in, quantization),
+    recording state (record, overdub, session record, punch, quantization),
     groove amount, Link and track-arming rules.
 
     Only the fields you give change; the answer shows the Set's state afterwards,
@@ -112,7 +111,6 @@ def update_set(
             "swing_amount": swing_amount,
             "clip_trigger_quantization": clip_trigger_quantization,
             "midi_recording_quantization": midi_recording_quantization,
-            "count_in": count_in,
             "select_on_launch": select_on_launch,
             "exclusive_arm": exclusive_arm,
             "exclusive_solo": exclusive_solo,

@@ -34,17 +34,6 @@ def update_clip(
     ) = "",
     legato: text("Legato launch: true / false.") = "",
     velocity_amount: text("How much launch velocity scales the clip, -1 to 1.") = "",
-    follow_action_enabled: text("Follow actions on or off: true / false.") = "",
-    follow_action_a: text(
-        "Follow action A: None, Stop, Again, Previous, Next, First, Last, Any, "
-        "Other or Jump."
-    ) = "",
-    follow_action_b: text("Follow action B, same choices as A.") = "",
-    follow_action_probability: text("Chance of A against B, 0-1.") = "",
-    follow_action_time: text("Follow action time in beats.") = "",
-    follow_action_linked: text("Follow action time linked to clip length.") = "",
-    follow_action_jump_index_a: text("Clip number action A jumps to.") = "",
-    follow_action_jump_index_b: text("Clip number action B jumps to.") = "",
     groove: text("A groove from the pool by number or exact name (see groove).") = "",
     warping: text("Audio: warp on or off: true / false.") = "",
     warp_mode: text(
@@ -53,6 +42,9 @@ def update_clip(
     gain: text("Audio: gain 0-1 (Live's raw scale; the answer shows dB).") = "",
     pitch_coarse: text("Audio: transpose in semitones, -48 to 48.") = "",
     pitch_fine: text("Audio: detune in cents, -50 to 50.") = "",
+    scale_mode: text("Clip scale highlighting on or off: true / false.") = "",
+    root_note: text("Clip scale root as a number 0 (C) to 11 (B).") = "",
+    scale_name: text("Clip scale name as Live shows it: Major, Minor...") = "",
     ram_mode: text("Audio: load the sample into RAM: true / false.") = "",
     stop_button: text(
         "Session slot: show or hide its stop button (works on an empty slot)."
@@ -89,7 +81,7 @@ def update_clip(
     empty stays as it is. Works on Session and timeline clips, MIDI and audio.
 
     Settings: name, color, mute, loop and marker positions, time signature, launch
-    mode and quantization, legato, follow actions, groove; for audio also warping,
+    mode and quantization, legato, clip scale, groove; for audio also warping,
     warp mode, gain, pitch and RAM mode. Actions: fire, stop, crop to the loop,
     duplicate_loop, quantize (grid, amount), clear_envelopes, move_playing_position,
     and warp markers (add, move, remove). Each field gets a result line with what
@@ -116,20 +108,15 @@ def update_clip(
             "launch_quantization": launch_quantization,
             "legato": legato,
             "velocity_amount": velocity_amount,
-            "follow_action_enabled": follow_action_enabled,
-            "follow_action_a": follow_action_a,
-            "follow_action_b": follow_action_b,
-            "follow_action_probability": follow_action_probability,
-            "follow_action_time": follow_action_time,
-            "follow_action_linked": follow_action_linked,
-            "follow_action_jump_index_a": follow_action_jump_index_a,
-            "follow_action_jump_index_b": follow_action_jump_index_b,
             "groove": groove,
             "warping": warping,
             "warp_mode": warp_mode,
             "gain": gain,
             "pitch_coarse": pitch_coarse,
             "pitch_fine": pitch_fine,
+            "scale_mode": scale_mode,
+            "root_note": root_note,
+            "scale_name": scale_name,
             "ram_mode": ram_mode,
             "stop_button": stop_button,
             "action": action,

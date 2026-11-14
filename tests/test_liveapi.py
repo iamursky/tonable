@@ -12,6 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "remote_script"))
 from Tonable import liveapi  # noqa: E402
 from Tonable.server import CommandError  # noqa: E402
 
+REAL_IS_LIVE_OBJECT = liveapi.is_live_object
+
 
 class L:
     """Stand-in for any Live class: the tests treat these as Live objects."""
@@ -584,3 +586,31 @@ def test_tool_forwards_to_the_bridge(monkeypatch):
     assert out == {"ok": True} and seen["command"] == "live_api"
     assert seen["params"]["path"] == "song" and seen["params"]["limit"] == "5"
     assert server.mcp is not None
+
+
+def test_live_classes_are_found_by_identity_not_by_module_name(monkeypatch):
+    """Live reports a class's module as "Song", not "Live.Song"."""
+    import types as _types
+
+    fake_live = _types.ModuleType("Live")
+    song_module = _types.ModuleType("Song")
+
+    class Song:
+        pass
+
+    Song.__module__ = "Song"
+    Song.__qualname__ = "Song"
+    song_module.Song = Song
+    fake_live.Song = song_module
+    monkeypatch.setattr(liveapi, "Live", fake_live)
+    monkeypatch.setattr(liveapi, "is_live_object", REAL_IS_LIVE_OBJECT)
+    assert liveapi.is_live_object(Song())
+
+    class Lookalike:  # same module name, but not Live's class
+        pass
+
+    Lookalike.__module__ = "Song"
+    Lookalike.__qualname__ = "Lookalike"
+    assert not liveapi.is_live_object(Lookalike())
+    assert not liveapi.is_live_object("text")
+    assert not liveapi.is_live_object(3)

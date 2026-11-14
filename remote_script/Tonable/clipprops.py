@@ -1,13 +1,13 @@
 """Clip settings and actions: update_clip, create_audio_clip, and what read_clip shows.
 
 Covers Session and Arrangement clips, MIDI and audio: name, color, mute, loop and
-marker positions, launch mode and quantization, legato, follow actions, time
-signature, groove, warp (mode, markers), gain and pitch, plus actions such as
+marker positions, launch mode and quantization, legato, time
+signature, scale, groove, warp (mode, markers), gain and pitch, plus actions such as
 fire, stop, crop, quantize and clear envelopes.
 
 Names and enum numbers come from the Live Object Model as remembered; Live reports
-the real value after each write, and update_clip passes any refusal on. Launch,
-follow-action and quantization enums are the least certain, so a write that Live
+the real value after each write, and update_clip passes any refusal on. Launch and
+quantization enums are the least certain, so a write that Live
 keeps at the old value comes back as an error line, never as a success. Warp markers,
 `available_warp_modes` and `Clip.quantize(grid, amount)` follow Producer Pal's notes
 (local/producer-pal/dev/live-api). Main thread only.
@@ -18,6 +18,11 @@ import os
 from . import clipref, props
 from .server import CommandError
 from .song import RECORD_QUANTIZATION, undo_step
+
+try:
+    import Live
+except ImportError:  # imported by the tests, outside Live
+    Live = None
 
 AUDIO_EXTENSIONS = (".wav", ".aif", ".aiff", ".flac", ".mp3", ".ogg", ".m4a", ".aac")
 
@@ -38,18 +43,6 @@ LAUNCH_QUANTIZATION = {
     "1/16": 12,
     "1/16T": 13,
     "1/32": 14,
-}
-FOLLOW_ACTION = {
-    "None": 0,
-    "Stop": 1,
-    "Again": 2,
-    "Previous": 3,
-    "Next": 4,
-    "First": 5,
-    "Last": 6,
-    "Any": 7,
-    "Other": 8,
-    "Jump": 9,
 }
 WARP_MODE = {
     "Beats": 0,
@@ -87,16 +80,9 @@ CLIP_PROPS = [
     props.prop("gain", "gain", "float", lo=0.0, hi=1.0),
     props.prop("pitch_coarse", "pitch_coarse", "int", lo=-48, hi=48),
     props.prop("pitch_fine", "pitch_fine", "float", lo=-50.0, hi=50.0),
-    props.prop("follow_action_enabled", "follow_action_enabled", "bool"),
-    props.prop("follow_action_a", "follow_action_a", "enum", choices=FOLLOW_ACTION),
-    props.prop("follow_action_b", "follow_action_b", "enum", choices=FOLLOW_ACTION),
-    props.prop(
-        "follow_action_probability", "follow_action_probability", "float", lo=0, hi=1
-    ),
-    props.prop("follow_action_time", "follow_action_time", "float", lo=0.0),
-    props.prop("follow_action_linked", "follow_action_linked", "bool"),
-    props.prop("follow_action_jump_index_a", "follow_action_jump_index_a", "int", lo=0),
-    props.prop("follow_action_jump_index_b", "follow_action_jump_index_b", "int", lo=0),
+    props.prop("scale_mode", "scale_mode", "bool"),
+    props.prop("root_note", "root_note", "int", lo=0, hi=11),
+    props.prop("scale_name", "scale_name", "str"),
 ]
 WARP_MODE_PROP = props.prop("warp_mode", "warp_mode", "enum", choices=WARP_MODE)
 STOP_BUTTON = props.prop("stop_button", "has_stop_button", "bool")
@@ -322,14 +308,43 @@ def _warp_marker(clip, action, p):
     at = _number(p.get("time_beats"), "time_beats")
     if action == "add_warp_marker":
         if props.given(p, "sample_time"):
-            clip.add_warp_marker(at, _number(p["sample_time"], "sample_time"))
+            seconds = _number(p["sample_time"], "sample_time")
         else:
-            clip.add_warp_marker(at)
+            seconds = _interpolated_seconds(clip, at)
+        clip.add_warp_marker(_warp_marker_object(clip, seconds, at))
     elif action == "move_warp_marker":
         clip.move_warp_marker(at, _number(p.get("distance_beats"), "distance_beats"))
     else:
         clip.remove_warp_marker(at)
     return audio_details(clip)
+
+
+def _warp_marker_object(clip, sample_time, beat_time):
+    """Live's add_warp_marker wants a Clip.WarpMarker. Its positional order is
+    (sample_time, beat_time), the reverse of how people say it, so use the names."""
+    kind = getattr(getattr(Live, "Clip", None), "WarpMarker", None)
+    if kind is None:
+        kind = type(list(clip.warp_markers)[0])
+    return kind(sample_time=sample_time, beat_time=beat_time)
+
+
+def _interpolated_seconds(clip, beat):
+    """Where in the sample a new marker at `beat` belongs: between its neighbours."""
+    markers = sorted(
+        ((m.beat_time, m.sample_time) for m in clip.warp_markers), key=lambda m: m[0]
+    )
+    if len(markers) < 2:
+        raise CommandError(
+            "bad_target", "the clip has too few warp markers; give sample_time"
+        )
+    before = [m for m in markers if m[0] <= beat]
+    after = [m for m in markers if m[0] > beat]
+    (b0, s0), (b1, s1) = (
+        (before[-1], after[0]) if before and after else (markers[-2], markers[-1])
+    )
+    if b1 == b0:
+        return s0
+    return s0 + (s1 - s0) * (beat - b0) / (b1 - b0)
 
 
 # --- create_audio_clip -----------------------------------------------------------

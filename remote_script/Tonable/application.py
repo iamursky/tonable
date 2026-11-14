@@ -417,7 +417,9 @@ def show_message(app, p):
     message = str(p.get("message") or "").strip()
     if not message:
         raise CommandError("bad_params", "message is required")
-    fn = props.get(app, "show_message", None) if app is not None else None
+    # show_message opens a modal dialog and wants Live's own text type; the
+    # on-the-fly message is the non-modal line in Live's status bar.
+    fn = props.get(app, "show_on_the_fly_message", None) if app is not None else None
     if fn is None:
         raise CommandError("not_supported", "this Live has no status-bar message")
     try:

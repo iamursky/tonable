@@ -463,7 +463,7 @@ def test_a_value_live_silently_keeps_is_reported():
     dev.oversample = False
     object.__setattr__(dev, "_ignore", ("global_mode",))
     out = run(song_with(dev), settings={"global_mode": "M/S", "oversample": True})
-    assert "Live kept" in line(out, "global_mode")["error"]
+    assert "Live still shows" in line(out, "global_mode")["error"]
     assert line(out, "oversample")["now"] is True
 
 

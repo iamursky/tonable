@@ -24,7 +24,7 @@ PluginDevice.get_parameter_names / is_editor_open, MixerDevice routing lists).
 
 From memory of the Live Object Model, NOT verified against a running Live:
 the class names Compressor2 / Hybrid / Looper, the Looper members, the Sample child
-(warping, warp_mode, gain, slicing_*, slice functions), Eq8 selected_band, Device
+(warping, warp_mode, gain, slicing_*, slice functions), Device
 is_using_compare_preset_b as writable, RackDevice.insert_chain / is_showing_chains /
 drum_pads_scroll_position, DrumChain color_index / is_auto_colored / choke_group /
 in_note / out_note ranges, and the Meld selected_engine labels. Live silently keeps
@@ -356,7 +356,6 @@ EQ8 = Spec(
         ),
         P("oversample", "oversample", "bool"),
         P("edit_mode", "edit_mode", "enum", choices={"A": 0, "B": 1}),
-        P("selected_band", "selected_band", "int", lo=0, hi=7),
     ],
     [],
 )
@@ -518,7 +517,6 @@ RACK = Spec(
         P("variation_count", "variation_count", "int", readonly=True),
         P("has_macro_mappings", "has_macro_mappings", "bool", readonly=True),
         P("drum_pads_scroll_position", "drum_pads_scroll_position", "int", lo=0),
-        P("visible_drum_pads", "visible_drum_pads", "int", readonly=True),
     ],
     [],
 )

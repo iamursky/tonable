@@ -1,12 +1,11 @@
 Tonable connects a local MCP client to Ableton Live 12.4+ through 31 tools.
 
-New in 0.6.0: clip settings, follow actions and warp, audio clips and audio-to-MIDI
+New in 0.6.0: clip settings, clip scale and warp, audio clips and audio-to-MIDI
 conversion, device-specific settings (Simpler, Wavetable, Drift, Compressor sidechain
 and others), Set recording and quantization state, extra transport actions, timeline
 clip moves and take lanes, interface and groove tools, and a guarded `live_api` for
-the rest of Live's object model. These additions were tested only against a stand-in
-for Live's API, not in Live itself: repeat the manual checklist in a disposable Set
-before relying on them.
+the rest of Live's object model. Most of these were run in Live 12.4.16; the
+documentation lists what was not. Repeat the manual checklist in a disposable Set.
 
 This release includes a Python wheel and source archive. No repository checkout
 is needed: use `uvx --python 3.11 --from <wheel-path-or-URL> tonable serve`, or

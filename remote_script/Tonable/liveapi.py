@@ -23,15 +23,15 @@ Rules, all enforced here:
 - `set` reads the value back: Live silently keeps the old value for some invalid
   writes, so a difference is reported as a warning.
 
-Not verified against a running Live: the traversal, write and confirm rules are
-tested against stand-in objects only. Live's own classes are recognised by their
-module name (`Live.*`); if a class reports a different module, `info` will show it
-as a plain summary and the path will stop there.
+Checked in Live 12.4.16: its classes report their module as "Song", "Track" and so
+on (not "Live.Song"), so `is_live_object` finds the class inside the Live package
+instead of trusting the name. The rest of the rules are tested against stand-ins.
 """
 
 import difflib
 import math
 import re
+import types
 
 from . import clipref, objects
 from .props import as_bool, get
@@ -83,9 +83,26 @@ def live_api(song, params, app=None):
 
 
 def is_live_object(obj):
-    """True for instances of Live's own classes (module Live or Live.*)."""
-    module = getattr(type(obj), "__module__", "") or ""
-    return module == "Live" or module.startswith("Live.")
+    """True for instances of Live's own classes.
+
+    Live reports a class's module as its submodule name ("Song", "Track"), not
+    "Live.Song", so the name alone proves nothing. A class counts when it is found,
+    under its own name, inside a submodule of the Live package itself. A module that
+    merely shares a name with one of Live's (a file on disk, a stand-in) does not.
+    """
+    cls = type(obj)
+    module = getattr(cls, "__module__", "") or ""
+    if module == "Live" or module.startswith("Live."):
+        return True
+    if Live is None:
+        return False
+    sub = getattr(Live, module.split(".")[0], None)
+    if not isinstance(sub, types.ModuleType):
+        return False
+    found = sub
+    for part in (getattr(cls, "__qualname__", cls.__name__)).split("."):
+        found = getattr(found, part, None)
+    return found is cls
 
 
 def is_sequence(obj):
@@ -179,7 +196,8 @@ def _require_live(obj, what):
     if not is_live_object(obj):
         raise CommandError(
             "forbidden",
-            f"{what}: {_what(obj)} is not a Live object, so it is not opened",
+            f"{what}: {_what(obj)} is not a Live object, so it is not opened "
+            f"(class module {getattr(type(obj), '__module__', None)!r})",
         )
 
 

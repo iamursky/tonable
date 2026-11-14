@@ -67,7 +67,7 @@ def make_app():
         unavailable_features=[],
         view=FakeView(),
         browser=browser,
-        show_message=messages.append,
+        show_on_the_fly_message=messages.append,
     )
     app.messages = messages
     return app
@@ -256,8 +256,7 @@ def test_show_message():
     assert app.messages == ["Hi"]
     with pytest.raises(CommandError):
         run(make_song(), app, action="show_message")
-    app.show_message = None
-    del app.show_message
+    del app.show_on_the_fly_message
     with pytest.raises(CommandError) as err:
         run(make_song(), app, action="show_message", message="Hi")
     assert err.value.code == "not_supported"

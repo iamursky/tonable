@@ -46,7 +46,7 @@ MIXER_PROPS = [
         "panning_mode",
         "panning_mode",
         "enum",
-        choices={"Stereo": 0, "Split Stereo": 1},
+        choices={"stereo": 0, "stereo_split": 1},
         choices_attr="panning_modes",
     ),
 ]
