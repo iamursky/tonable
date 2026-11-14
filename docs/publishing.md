@@ -40,14 +40,15 @@ is a version tag. Dispatching it on a branch fails before publication.
 
 1. Update the package version in `pyproject.toml` and
    `remote_script/Tonable/version.py`; refresh `uv.lock`. Update versioned links
-   in the README and client instructions, plus the release notes in
+   in the README and `docs/clients.md` (check with
+   `grep -rn '<previous version>' README.md docs`), plus the release notes in
    `.github/release-notes.md`.
 2. Merge the reviewed candidate into `main` and wait for CI to pass.
-3. Tag that exact commit with `v<version>` and push only that tag. For 0.6.0:
+3. Tag that exact commit with `v<version>` and push only that tag. For 0.6.1:
 
    ```sh
-   git tag -a v0.6.0 <approved-commit> -m 'Tonable 0.6.0'
-   git push origin refs/tags/v0.6.0
+   git tag -a v0.6.1 <approved-commit> -m 'Tonable 0.6.1'
+   git push origin refs/tags/v0.6.1
    ```
 
 4. Release checks that the tag equals the package version and its commit is on
@@ -95,7 +96,7 @@ to version tags. Then enable the repository variable:
 
 ```sh
 gh variable set PYPI_PUBLISH_ENABLED --repo iamursky/tonable --body true
-gh workflow run release.yml --repo iamursky/tonable --ref v0.6.0
+gh workflow run release.yml --repo iamursky/tonable --ref v0.6.1
 ```
 
 The dispatch reruns validation and verifies existing GitHub assets before the
@@ -105,12 +106,12 @@ reject an unavailable name. See the official
 [pending-publisher guide](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 and [publishing workflow guide](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
 
-After upload, verify version 0.6.0 at
-[PyPI](https://pypi.org/project/tonable/0.6.0/), compare its file hashes with the
+After upload, verify version 0.6.1 at
+[PyPI](https://pypi.org/project/tonable/0.6.1/), compare its file hashes with the
 GitHub release, and test the registry command from outside the checkout:
 
 ```sh
-uvx --python 3.11 --from 'tonable==0.6.0' tonable --version
+uvx --python 3.11 --from 'tonable==0.6.1' tonable --version
 ```
 
 Only then advertise registry installation. Until then, use the versioned GitHub
@@ -128,8 +129,8 @@ uv build
 uvx --from twine==7.0.0 twine check --strict dist/*
 uv run python scripts/check_sdist.py --python 3.11
 uv run python scripts/check_distribution.py \
-  --wheel dist/tonable-0.6.0-py3-none-any.whl \
-  --sdist dist/tonable-0.6.0.tar.gz --python 3.11
+  --wheel dist/tonable-0.6.1-py3-none-any.whl \
+  --sdist dist/tonable-0.6.1.tar.gz --python 3.11
 ```
 
 Start with a fresh `dist/` containing only the candidate version. Build output is

@@ -16,11 +16,11 @@ Test the launcher in a terminal:
 
 ```sh
 /absolute/path/to/uvx --python 3.11 \
-  --from https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl tonable --version
+  --from https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl tonable --version
 ```
 
 Alternatively, [install the persistent CLI](../README.md#install-without-a-checkout)
-with `uv tool install --python 3.11 https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl`.
+with `uv tool install --python 3.11 https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl`.
 Find its executable with `uv tool dir --bin`. In each example, you can replace the
 uvx command and all its arguments with the absolute `tonable` executable and
 `serve`. Neither route needs a working directory or Tonable-specific environment
@@ -39,7 +39,7 @@ Register the local stdio launcher:
 
 ```sh
 codex mcp add tonable -- /absolute/path/to/uvx --python 3.11 \
-  --from https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl tonable serve
+  --from https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl tonable serve
 codex mcp list
 ```
 
@@ -48,7 +48,7 @@ Or merge this into `~/.codex/config.toml`:
 ```toml
 [mcp_servers.tonable]
 command = "/absolute/path/to/uvx"
-args = ["--python", "3.11", "--from", "https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl", "tonable", "serve"]
+args = ["--python", "3.11", "--from", "https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl", "tonable", "serve"]
 ```
 
 Codex CLI and its IDE extension share this configuration. Start a local session;
@@ -65,7 +65,7 @@ Register Tonable in user scope:
 
 ```sh
 claude mcp add --transport stdio --scope user tonable -- /absolute/path/to/uvx \
-  --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl tonable serve
+  --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl tonable serve
 claude mcp get tonable
 ```
 
@@ -88,7 +88,7 @@ other servers:
       "command": "/absolute/path/to/uvx",
       "args": [
         "--python", "3.11", "--from",
-        "https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl",
+        "https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl",
         "tonable", "serve"
       ]
     }
@@ -111,7 +111,7 @@ Use your client's official stdio configuration format:
 | Server name | `tonable` |
 | Transport | `stdio` |
 | Command | Absolute path to `uvx` |
-| Arguments | `["--python", "3.11", "--from", "https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl", "tonable", "serve"]` |
+| Arguments | `["--python", "3.11", "--from", "https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl", "tonable", "serve"]` |
 | Environment | Same user account as Live |
 | Working directory | Not required |
 

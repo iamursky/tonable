@@ -1,5 +1,8 @@
 Tonable connects a local MCP client to Ableton Live 12.4+ through 31 tools.
 
+Version 0.6.1 only corrects the version in the client setup instructions
+(`docs/clients.md`) that 0.6.0 still pointed at 0.5.2; the code is unchanged.
+
 New in 0.6.0: clip settings, clip scale and warp, audio clips and audio-to-MIDI
 conversion, device-specific settings (Simpler, Wavetable, Drift, Compressor sidechain
 and others), Set recording and quantization state, extra transport actions, timeline

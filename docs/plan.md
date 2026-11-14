@@ -1,6 +1,6 @@
 # Architecture and implementation notes
 
-This document describes Tonable 0.6.0. It replaces early planning notes with the
+This document describes Tonable 0.6.1. It replaces early planning notes with the
 implemented design. See [tools](tools.md) for the public API and
 [client setup](clients.md) for integration.
 

@@ -1,16 +1,16 @@
 # Tonable
 
-![Tonable — connect your assistant to Ableton Live](https://raw.githubusercontent.com/iamursky/tonable/v0.6.0/assets/tonable-logo.svg)
+![Tonable — connect your assistant to Ableton Live](https://raw.githubusercontent.com/iamursky/tonable/v0.6.1/assets/tonable-logo.svg)
 
 Tonable connects a local MCP assistant to **Ableton Live 12.4+**. Read a Live Set,
 load devices and presets, write MIDI notes, shape automation and arrange scenes
 through 31 tools. Tonable runs on your Mac: the assistant starts an MCP server over
 stdio, and a Remote Script executes commands inside Live.
 
-Version **0.6.0**. The tools were exercised in Live **12.4.16**, including most of
+Version **0.6.1**. The tools were exercised in Live **12.4.16**, including most of
 the 0.6 additions (everything marked *new* in the
-[tool reference](https://github.com/iamursky/tonable/blob/v0.6.0/docs/tools.md)); the
-tool reference and the [manual checklist](https://github.com/iamursky/tonable/blob/v0.6.0/tests/manual_checklist.md)
+[tool reference](https://github.com/iamursky/tonable/blob/v0.6.1/docs/tools.md)); the
+tool reference and the [manual checklist](https://github.com/iamursky/tonable/blob/v0.6.1/tests/manual_checklist.md)
 list what has not been run in Live yet. Repeat the checklist on your installation in a
 disposable Set. Tonable is an independent project, unaffiliated with Ableton AG.
 
@@ -37,7 +37,7 @@ disposable Set. Tonable is an independent project, unaffiliated with Ableton AG.
 - Group edits into one undo step with `batch`; inspect `.adg` and `.adv` files
   without opening Live.
 
-See the [tool reference and examples](https://github.com/iamursky/tonable/blob/v0.6.0/docs/tools.md) for addresses, arguments and
+See the [tool reference and examples](https://github.com/iamursky/tonable/blob/v0.6.1/docs/tools.md) for addresses, arguments and
 limitations.
 
 ## Requirements
@@ -57,14 +57,14 @@ limitations.
 ## Install without a checkout
 
 Get the wheel, source archive and SHA-256 checksums from the
-[GitHub release](https://github.com/iamursky/tonable/releases/tag/v0.6.0).
+[GitHub release](https://github.com/iamursky/tonable/releases/tag/v0.6.1).
 CI builds and checks each release before publishing its files. You can run the
 versioned wheel URL directly, without cloning the repository:
 
 
 ```sh
-uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl tonable libraries
-uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl tonable install
+uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl tonable libraries
+uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl tonable install
 ```
 
 The installer lists existing libraries found in Live's preferences. If there are
@@ -78,7 +78,7 @@ To check a specific destination before copying, use the **User Library root**
 from Live's **Settings → Library**, not the `Remote Scripts` folder:
 
 ```sh
-uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl tonable install \
+uvx --python 3.11 --from https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl tonable install \
   --user-library "/path/to/User Library" --dry-run
 ```
 
@@ -100,7 +100,7 @@ Live preferences, select a Control Surface or contact Live unless you add
 For a persistent CLI, independent of both the checkout and the wheel's location:
 
 ```sh
-uv tool install --python 3.11 https://github.com/iamursky/tonable/releases/download/v0.6.0/tonable-0.6.0-py3-none-any.whl
+uv tool install --python 3.11 https://github.com/iamursky/tonable/releases/download/v0.6.1/tonable-0.6.1-py3-none-any.whl
 uv tool dir --bin
 ```
 
@@ -110,13 +110,13 @@ keep a local wheel at the configured path: its environment may need to be rebuil
 See the [official uv tools guide](https://docs.astral.sh/uv/guides/tools/) for tool
 isolation.
 
-PyPI publication uses a separate Trusted Publishing job. Once version 0.6.0 is
-listed on [the project's PyPI page](https://pypi.org/project/tonable/0.6.0/), you
+PyPI publication uses a separate Trusted Publishing job. Once version 0.6.1 is
+listed on [the project's PyPI page](https://pypi.org/project/tonable/0.6.1/), you
 can use a pinned registry source:
 
 ```sh
-uvx --python 3.11 --from 'tonable==0.6.0' tonable install
-uvx --python 3.11 --from 'tonable==0.6.0' tonable serve
+uvx --python 3.11 --from 'tonable==0.6.1' tonable install
+uvx --python 3.11 --from 'tonable==0.6.1' tonable serve
 ```
 
 The release workflow verifies the registry upload, file hashes and tool discovery.
@@ -134,15 +134,15 @@ uv run tonable install
 
 Tonable exposes MCP over **stdio only**. Use the local setup for your client:
 
-- [Codex CLI and IDE extension](https://github.com/iamursky/tonable/blob/v0.6.0/docs/clients.md#codex)
-- [Claude Code](https://github.com/iamursky/tonable/blob/v0.6.0/docs/clients.md#claude-code)
-- [Claude Desktop](https://github.com/iamursky/tonable/blob/v0.6.0/docs/clients.md#claude-desktop)
-- [Other local MCP clients](https://github.com/iamursky/tonable/blob/v0.6.0/docs/clients.md#other-local-mcp-clients)
+- [Codex CLI and IDE extension](https://github.com/iamursky/tonable/blob/v0.6.1/docs/clients.md#codex)
+- [Claude Code](https://github.com/iamursky/tonable/blob/v0.6.1/docs/clients.md#claude-code)
+- [Claude Desktop](https://github.com/iamursky/tonable/blob/v0.6.1/docs/clients.md#claude-desktop)
+- [Other local MCP clients](https://github.com/iamursky/tonable/blob/v0.6.1/docs/clients.md#other-local-mcp-clients)
 
 The examples follow official client documentation. They describe a compatible
 transport; they do not certify every client version. Tonable has no HTTP/SSE
 endpoint or hosted connector. The private loopback socket inside Live is not an
-MCP URL. See [client setup](https://github.com/iamursky/tonable/blob/v0.6.0/docs/clients.md) for sources and verification steps.
+MCP URL. See [client setup](https://github.com/iamursky/tonable/blob/v0.6.1/docs/clients.md) for sources and verification steps.
 
 Start with a read-only request:
 
@@ -200,23 +200,23 @@ uv run ruff check .
 uv run ruff format --check .
 uv build
 uv run python scripts/check_distribution.py \
-  --wheel dist/tonable-0.6.0-py3-none-any.whl \
-  --sdist dist/tonable-0.6.0.tar.gz --python 3.11
+  --wheel dist/tonable-0.6.1-py3-none-any.whl \
+  --sdist dist/tonable-0.6.1.tar.gz --python 3.11
 ```
 
 Tests use a fake Live API and local loopback sockets. They do not prove audio
-quality or replace [checks inside Live](https://github.com/iamursky/tonable/blob/v0.6.0/tests/manual_checklist.md). The optional
-[Live API probe](https://github.com/iamursky/tonable/blob/v0.6.0/probe/README.md) is developer diagnostics; normal installation
+quality or replace [checks inside Live](https://github.com/iamursky/tonable/blob/v0.6.1/tests/manual_checklist.md). The optional
+[Live API probe](https://github.com/iamursky/tonable/blob/v0.6.1/probe/README.md) is developer diagnostics; normal installation
 does not need it and the installed wheel excludes it.
 
-See [architecture](https://github.com/iamursky/tonable/blob/v0.6.0/docs/plan.md) and [publication checks](https://github.com/iamursky/tonable/blob/v0.6.0/docs/publishing.md).
+See [architecture](https://github.com/iamursky/tonable/blob/v0.6.1/docs/plan.md) and [publication checks](https://github.com/iamursky/tonable/blob/v0.6.1/docs/publishing.md).
 
 ## Acknowledgments and license
 
 Tonable draws on techniques from
 [ableton-live-mcp](https://github.com/wstierhout/ableton-live-mcp) and
 [Producer Pal](https://github.com/adamjmurray/producer-pal). Attribution and their
-MIT notices are in [THIRD_PARTY_NOTICES.md](https://github.com/iamursky/tonable/blob/v0.6.0/THIRD_PARTY_NOTICES.md).
+MIT notices are in [THIRD_PARTY_NOTICES.md](https://github.com/iamursky/tonable/blob/v0.6.1/THIRD_PARTY_NOTICES.md).
 
-Tonable is licensed under [MIT](https://github.com/iamursky/tonable/blob/v0.6.0/LICENSE), © 2026 Ilya Amursky. Ableton software and
+Tonable is licensed under [MIT](https://github.com/iamursky/tonable/blob/v0.6.1/LICENSE), © 2026 Ilya Amursky. Ableton software and
 content are not included and remain subject to their own licenses.
