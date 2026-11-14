@@ -15,6 +15,9 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+# Tools the published server must list; update when a tool is added or removed.
+EXPECTED_TOOLS = 31
+
 
 async def discover(version, root):
     env = {
@@ -54,7 +57,7 @@ async def discover(version, root):
                 initialized = await client.initialize()
                 assert initialized.serverInfo.version == version
                 tools = await client.list_tools()
-                assert len(tools.tools) == 24
+                assert len(tools.tools) == EXPECTED_TOOLS
                 response = await client.call_tool("live_status", {})
                 assert not response.isError
                 status = json.loads(response.content[0].text)
@@ -87,7 +90,8 @@ def main():
     with tempfile.TemporaryDirectory(prefix="tonable-registry-") as directory:
         asyncio.run(asyncio.wait_for(discover(version, Path(directory)), timeout=240))
     print(
-        f"Verified PyPI tonable {version}: both file hashes, uvx entry point, 24 tools."
+        f"Verified PyPI tonable {version}: both file hashes, uvx entry point, "
+        f"{EXPECTED_TOOLS} tools."
     )
 
 

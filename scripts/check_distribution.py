@@ -17,6 +17,10 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+REPO = Path(__file__).resolve().parents[1]
+# Tools the server must list; update when a tool is added or removed.
+EXPECTED_TOOLS = 31
+
 
 def run(command, cwd, env):
     return subprocess.run(
@@ -41,14 +45,18 @@ async def probe(command, args, home):
             initialized = await client.initialize()
             tools = await client.list_tools()
             assert initialized.serverInfo.name == "tonable"
-            assert len(tools.tools) == 24
-            assert len({tool.name for tool in tools.tools}) == 24
+            assert len(tools.tools) == EXPECTED_TOOLS
+            assert len({tool.name for tool in tools.tools}) == EXPECTED_TOOLS
             result = await client.call_tool("live_status", {})
             assert not result.isError
             status = json.loads(result.content[0].text)
             assert status["connected"] is False
             assert status["code"] == "not_running"
-            print(json.dumps({"version": initialized.serverInfo.version, "tools": 24}))
+            print(
+                json.dumps(
+                    {"version": initialized.serverInfo.version, "tools": EXPECTED_TOOLS}
+                )
+            )
 
 
 def inspect_archives(wheel, sdist):
@@ -59,7 +67,11 @@ def inspect_archives(wheel, sdist):
             for name in names
             if name.startswith("tonable/remote_script/") and name.endswith(".py")
         }
-        assert len(scripts) == 14, sorted(scripts)
+        expected = {
+            f"Tonable/{path.name}"
+            for path in (REPO / "remote_script" / "Tonable").glob("*.py")
+        }
+        assert set(scripts) == expected, sorted(set(scripts) ^ expected)
         assert any(name.endswith("/licenses/LICENSE") for name in names)
         assert any(name.endswith("/licenses/THIRD_PARTY_NOTICES.md") for name in names)
         assert not any(name.startswith(("tests/", "probe/")) for name in names)
@@ -161,7 +173,7 @@ def check(wheel, sdist, python):
                 root,
                 env,
             )
-            assert json.loads(output.splitlines()[-1])["tools"] == 24
+            assert json.loads(output.splitlines()[-1])["tools"] == EXPECTED_TOOLS
         # Persistent CLI entry point, isolated from the user's uv tool installation.
         run([uv, "tool", "install", "--python", python, wheel], root, env)
         tool = root / "bin" / executable.name
@@ -176,7 +188,7 @@ def check(wheel, sdist, python):
                     "version": version,
                     "python": run([interpreter, "--version"], root, env),
                     "remote_script_files": len(scripts),
-                    "tools_per_launch": 24,
+                    "tools_per_launch": EXPECTED_TOOLS,
                     "launches": [
                         "console",
                         "python -m",

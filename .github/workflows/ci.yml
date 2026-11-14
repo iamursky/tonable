@@ -73,7 +73,7 @@ jobs:
         run: uvx --from twine==7.0.0 twine check --strict dist/*
       - name: Test extracted source on the minimum Python
         run: uv run --locked python scripts/check_sdist.py --python 3.11
-      - name: Check installation, resources, uvx and 24 MCP tools outside checkout
+      - name: Check installation, resources, uvx and MCP tools outside checkout
         run: |
           uv run --locked python scripts/check_distribution.py \
             --wheel dist/tonable-*-py3-none-any.whl \
