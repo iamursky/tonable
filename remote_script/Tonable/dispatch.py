@@ -6,18 +6,28 @@ import sys
 # Reload every command module that is already loaded before importing them. A
 # running Live reloads this module last (see __init__._reload), and the list in an
 # older __init__ may not know the newer modules.
+# Dependencies first: a module that does `from .x import name` keeps the old name if
+# x is reloaded after it.
 MODULES = (
     "version",
     "params",
+    "props",
     "objects",
-    "reading",
+    "clipref",
     "song",
+    "specialized",
+    "clipprops",
     "clips",
     "edit",
+    "reading",
     "devices",
     "library",
     "envelopes",
     "arrangement",
+    "grooves",
+    "conversions",
+    "application",
+    "liveapi",
 )
 for _name in MODULES:
     _module = sys.modules.get(f"{__package__}.{_name}")
@@ -25,14 +35,20 @@ for _name in MODULES:
         importlib.reload(_module)
 
 from . import (  # noqa: E402
+    application,
     arrangement,
+    clipprops,
     clips,
+    conversions,
     devices,
     edit,
     envelopes,
+    grooves,
     library,
+    liveapi,
     reading,
     song,
+    specialized,
 )
 from .server import CommandError  # noqa: E402
 from .version import VERSION  # noqa: E402
@@ -53,7 +69,11 @@ def commands(surface):
             all_params=bool(params.get("all_params")),
         ),
         "read_clip": lambda params: clips.read_clip(
-            surface.song, _required(params, "track"), params.get("slot")
+            surface.song, params.get("track"), params.get("slot"), params.get("clip")
+        ),
+        "update_clip": lambda params: clipprops.update_clip(surface.song, params),
+        "create_audio_clip": lambda params: clipprops.create_audio_clip(
+            surface.song, params
         ),
         "write_clip": lambda params: clips.write_clip(surface.song, params),
         "undo": lambda params: song.undo(surface.song, params),
@@ -74,6 +94,13 @@ def commands(surface):
         "read_envelope": lambda params: envelopes.read_envelope(surface.song, params),
         "write_envelope": lambda params: envelopes.write_envelope(surface.song, params),
         "arrangement": lambda params: arrangement.arrangement(surface.song, params),
+        "configure_device": lambda params: specialized.configure_device(
+            surface.song, params
+        ),
+        "app": lambda params: application.application(surface.song, params, None),
+        "groove": lambda params: grooves.groove(surface.song, params),
+        "convert_audio": lambda params: conversions.convert_audio(surface.song, params),
+        "live_api": lambda params: liveapi.live_api(surface.song, params),
     }
     table["batch"] = lambda params: batch(surface.song, table, params)
     return table

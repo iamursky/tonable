@@ -4,21 +4,36 @@
 
 Tonable connects a local MCP assistant to **Ableton Live 12.4+**. Read a Live Set,
 load devices and presets, write MIDI notes, shape automation and arrange scenes
-through 24 tools. Tonable runs on your Mac: the assistant starts an MCP server over
+through 31 tools. Tonable runs on your Mac: the assistant starts an MCP server over
 stdio, and a Remote Script executes commands inside Live.
 
-Version **0.5.2**. Earlier development runs exercised the tools in Live **12.4.16**;
-see the [manual checklist](https://github.com/iamursky/tonable/blob/v0.5.2/tests/manual_checklist.md) for checks to repeat on your
-installation. Tonable is an independent project, unaffiliated with Ableton AG.
+Version **0.6.0**. Earlier development runs exercised the 0.5 tools in Live
+**12.4.16**. The 0.6 additions (everything marked *new* in the
+[tool reference](https://github.com/iamursky/tonable/blob/v0.6.0/docs/tools.md)) have been tested only against a stand-in for Live's
+API, not in Live itself: work through the [manual checklist](https://github.com/iamursky/tonable/blob/v0.6.0/tests/manual_checklist.md)
+on a disposable Set before relying on them. Tonable is an independent project,
+unaffiliated with Ableton AG.
 
 ## What you can do
 
 - Inspect tracks, rack chains, Drum Rack pads, parameters, clips and scenes.
 - Search Core Library, Packs and User Library; load devices and presets.
-- Change mixer settings, routing, device parameters and rack macros.
-- Create and edit Session MIDI clips; transpose, shift and quantize notes.
+- Change mixer settings, routing (with channels), monitoring, crossfader
+  assignment, device parameters and rack macros.
+- Control the Set: record, overdub, punch, count-in, quantization, groove amount,
+  Link, scale mode, locators, and transport actions such as capture MIDI.
+- Create and edit MIDI clips (Session or timeline) with note probability, velocity
+  deviation and release velocity; transpose, shift, quantize and mute notes.
+- Set every clip property: loop and markers, launch mode and quantization, follow
+  actions, groove; for audio clips warp mode and markers, gain and pitch.
+- Put audio files on audio tracks; convert audio to MIDI, Simpler or Drum Rack.
+- Configure device internals no parameter exposes: Simpler, Wavetable, Drift,
+  Meld, Compressor sidechain, EQ Eight, Hybrid Reverb, Roar, Looper, rack chains.
 - Read and write Session automation, including ramps, jumps and curves.
-- Copy clips or entire scenes to Arrangement; create timeline clips and locators.
+- Copy or move timeline clips, copy whole scenes to Arrangement, add take lanes
+  and locators.
+- Drive Live's windows, selection and browser preview; tune the groove pool.
+- Reach any other Live API member with the guarded `live_api` tool.
 - Group edits into one undo step with `batch`; inspect `.adg` and `.adv` files
   without opening Live.
 

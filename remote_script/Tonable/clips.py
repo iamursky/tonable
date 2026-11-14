@@ -6,7 +6,8 @@ beats from the clip start. Pitches are MIDI numbers or names with C3 = 60.
 
 import math
 
-from . import objects
+from . import clipref, objects
+from .clipprops import audio_details, clip_settings, is_audio
 from .server import CommandError
 from .song import undo_step
 
@@ -16,13 +17,22 @@ except ImportError:  # imported by the tests, outside Live
     Live = None
 
 
-def read_clip(song, track_ref, slot_index):
-    track, slot, where = _slot(song, track_ref, slot_index)
+def read_clip(song, track_ref=None, slot_index=None, clip_address=None):
+    """A Session clip (track and slot) or any clip by address (t0/s2, t0/a1)."""
+    track, slot, where = _resolve(
+        song, {"track": track_ref, "slot": slot_index, "clip": clip_address}
+    )
     if not slot.has_clip:
         raise CommandError("not_found", f"{where} is empty")
     clip = slot.clip
-    out = {"track": objects.track_path(song, track), "slot": slot_index}
+    out = {"track": objects.track_path(song, track)}
+    out.update(_address(song, track, clip, slot_index))
     out.update(_clip_info(clip))
+    settings = clip_settings(clip)
+    if settings:
+        out["settings"] = settings
+    if is_audio(clip):
+        out.update(audio_details(clip))
     if clip.is_midi_clip:
         out["notes"] = [_note_out(n) for n in _sorted(clip.get_all_notes_extended())]
     return out
@@ -30,12 +40,11 @@ def read_clip(song, track_ref, slot_index):
 
 def write_clip(song, params):
     """Create a MIDI clip or change one, and write notes, as one undo step."""
-    track_ref = params.get("track")
     slot_index = params.get("slot")
     mode = params.get("mode") or "replace"
     if mode not in ("replace", "add"):
         raise CommandError("bad_params", "mode must be replace or add")
-    track, slot, where = _slot(song, track_ref, slot_index)
+    track, slot, where = _resolve(song, params)
     if not getattr(track, "has_midi_input", False):
         raise CommandError("bad_target", f"{where}: {track.name} is not a MIDI track")
 
@@ -65,7 +74,7 @@ def write_clip(song, params):
 
     out = {
         "track": objects.track_path(song, track),
-        "slot": slot_index,
+        **_address(song, track, clip, slot_index),
         "created": created,
         **_clip_info(clip),
         "notes_added": len(notes),
@@ -106,13 +115,18 @@ def parse_note(item):
         raise CommandError(
             "bad_note", "a note must be an object with pitch, start, length"
         )
-    return {
+    note = {
         "pitch": parse_pitch(_field(item, "pitch", "note")),
         "start": _beats(_field(item, "start", "start_beats", "time"), "start", True),
         "length": _beats(_field(item, "length", "duration", "length_beats"), "length"),
         "velocity": _velocity(_field(item, "velocity", "vel")),
         "mute": bool(item.get("mute") or False),
     }
+    for key, low, high in EXTRA_NOTE_FIELDS:
+        value = item.get(key)
+        if value not in (None, ""):
+            note[key] = _ranged(value, key, low, high)
+    return note
 
 
 def parse_pitch(value):
@@ -133,6 +147,24 @@ def fit_length(song, notes):
     bar = song.signature_numerator * 4.0 / song.signature_denominator
     end = max((n["start"] + n["length"] for n in notes), default=0.0)
     return max(1, math.ceil(end / bar)) * bar
+
+
+# Live 12 note properties beyond pitch, time, velocity and mute: (name, low, high).
+EXTRA_NOTE_FIELDS = (
+    ("probability", 0.0, 1.0),
+    ("velocity_deviation", -127.0, 127.0),
+    ("release_velocity", 0.0, 127.0),
+)
+
+
+def _ranged(value, name, low, high):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        raise CommandError("bad_note", f"{name} must be a number") from None
+    if not low <= number <= high:
+        raise CommandError("bad_note", f"{name} {value} is outside {low:g}-{high:g}")
+    return number
 
 
 def _field(item, *names):
@@ -171,12 +203,14 @@ def _velocity(value):
 
 
 def _note_spec(note):
+    extra = {key: note[key] for key, _, _ in EXTRA_NOTE_FIELDS if key in note}
     return Live.Clip.MidiNoteSpecification(
         pitch=note["pitch"],
         start_time=note["start"],
         duration=note["length"],
         velocity=note["velocity"],
         mute=note["mute"],
+        **extra,
     )
 
 
@@ -190,6 +224,15 @@ def _note_out(note):
     }
     if note.mute:
         out["mute"] = True
+    # Only what differs from Live's defaults, so plain notes stay short.
+    for key, default in (
+        ("probability", 1.0),
+        ("velocity_deviation", 0.0),
+        ("release_velocity", 64.0),
+    ):
+        value = getattr(note, key, default)
+        if value != default:
+            out[key] = value
     return out
 
 
@@ -201,26 +244,15 @@ def _sorted(notes):
 
 
 def _slot(song, track_ref, slot_index):
-    if track_ref is None or str(track_ref).strip() == "":
-        raise CommandError("bad_params", "track is required (t0)")
-    track = objects.track(song, track_ref)
-    path = objects.track_path(song, track)
-    if not path.startswith("t"):
-        raise CommandError(
-            "bad_target", f"{path} has no clip slots: use a track t0, t1..."
-        )
-    try:
-        index = int(slot_index)
-    except (TypeError, ValueError):
-        raise CommandError("bad_params", "slot must be a scene number from 0") from None
-    slots = list(track.clip_slots)
-    if not 0 <= index < len(slots):
-        raise CommandError(
-            "not_found",
-            f"no slot {index} on {path}: the Set has {len(slots)} scenes (slots 0-"
-            f"{len(slots) - 1}); add a scene first",
-        )
-    return track, slots[index], f"{path} slot {index}"
+    return clipref.slot_for(song, track_ref, slot_index)
+
+
+def _resolve(song, params):
+    return clipref.resolve(song, params)
+
+
+def _address(song, track, clip, slot_index=None):
+    return clipref.address(song, track, clip, slot_index)
 
 
 def _clip_info(clip):
@@ -248,7 +280,19 @@ def _set_length(clip, length):
 
 # --- edit_notes -------------------------------------------------------------
 
-EDIT_ACTIONS = ("delete", "transpose", "shift", "quantize", "velocity", "length")
+EDIT_ACTIONS = (
+    "delete",
+    "transpose",
+    "shift",
+    "quantize",
+    "velocity",
+    "length",
+    "mute",
+    "unmute",
+    "probability",
+    "velocity_deviation",
+    "release_velocity",
+)
 
 
 def edit_notes(song, params):
@@ -262,7 +306,7 @@ def edit_notes(song, params):
         raise CommandError(
             "bad_params", "action must be one of: " + ", ".join(EDIT_ACTIONS)
         )
-    track, slot, where = _slot(song, params.get("track"), params.get("slot"))
+    track, slot, where = _resolve(song, params)
     if not slot.has_clip or not slot.clip.is_midi_clip:
         raise CommandError("not_found", f"{where} has no MIDI clip")
     clip = slot.clip
@@ -288,7 +332,7 @@ def edit_notes(song, params):
             clip.apply_note_modifications(notes)
     out = {
         "track": objects.track_path(song, track),
-        "slot": int(params.get("slot")),
+        **_address(song, track, clip, params.get("slot")),
         "action": action,
         "notes_matched": len(chosen),
         "notes_total": len(list(clip.get_all_notes_extended())),
@@ -346,6 +390,19 @@ def _change(action, params):
 
         def apply(note):
             note.velocity = velocity
+
+    elif action in ("mute", "unmute"):
+        muted = action == "mute"
+
+        def apply(note):
+            note.mute = muted
+
+    elif action in ("probability", "velocity_deviation", "release_velocity"):
+        low, high = next((lo, hi) for key, lo, hi in EXTRA_NOTE_FIELDS if key == action)
+        value = _ranged(params.get("value"), "value", low, high)
+
+        def apply(note):
+            setattr(note, action, value)
 
     else:  # length
         length = _beats(params.get("length_beats"), "length_beats")

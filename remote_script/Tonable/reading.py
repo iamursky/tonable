@@ -2,7 +2,8 @@
 
 import difflib
 
-from . import objects, params
+from . import edit, objects, params, props, specialized
+from . import song as song_module
 from .server import CommandError
 
 # Device.type
@@ -17,6 +18,10 @@ def read_set(song):
         entry = {"index": s, "name": scene.name}
         if _get(scene, "tempo_enabled", False):
             entry["tempo"] = scene.tempo
+        if _get(scene, "time_signature_enabled", False):
+            entry["time_signature"] = (
+                f"{scene.time_signature_numerator}/{scene.time_signature_denominator}"
+            )
         clips = {}
         for t, track in enumerate(tracks):
             slots = list(track.clip_slots)
@@ -24,7 +29,7 @@ def read_set(song):
                 clips[f"t{t}"] = slots[s].clip.name
         entry["clips"] = clips
         scenes.append(entry)
-    return {
+    out = {
         "tempo": song.tempo,
         "time_signature": f"{song.signature_numerator}/{song.signature_denominator}",
         "is_playing": bool(song.is_playing),
@@ -44,6 +49,13 @@ def read_set(song):
             {"name": cue.name, "time_beats": cue.time} for cue in song.cue_points
         ],
     }
+    settings = props.read(song, song_module.SET_PROPS)
+    if settings:
+        out["settings"] = settings
+    facts = song_module.set_facts(song)
+    if facts:
+        out["facts"] = facts
+    return out
 
 
 def read_track(song, ref):
@@ -53,6 +65,9 @@ def read_track(song, ref):
     out = _track_summary(song, track)
     out["path"] = path
     out["mixer"] = _mixer(song, track)
+    settings = edit.track_settings(track)
+    if settings:
+        out["settings"] = settings
     routing = _routing(track)
     if routing:
         out["routing"] = routing
@@ -101,6 +116,9 @@ def read_device(song, path, wanted=None, all_params=False):
     out = {"path": path, **_device_head(device)}
     if plist:
         out["on"] = _is_on(plist[0])
+    settings = specialized.describe(device)
+    if settings:
+        out["settings"] = settings
     is_rack = bool(_get(device, "can_have_chains", False))
     if is_rack:
         out["macros"] = _macros(device, plist)
@@ -160,6 +178,8 @@ def _routing(track):
     for key, attr in (
         ("input", "input_routing_type"),
         ("output", "output_routing_type"),
+        ("input_channel", "input_routing_channel"),
+        ("output_channel", "output_routing_channel"),
     ):
         value = _get(track, attr, None)
         name = _get(value, "display_name", None)

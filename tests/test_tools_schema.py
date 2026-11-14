@@ -9,7 +9,7 @@ import asyncio
 from tonable import bridge, server
 from tonable.tools import session
 
-MAX_TOOLS = 25
+MAX_TOOLS = 35
 # Reserved for compatibility with existing clients.
 FORBIDDEN_ARGUMENTS = {"device", "session_id"}
 

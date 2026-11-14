@@ -9,11 +9,47 @@ delete and duplicate take one address for anything they can act on:
 
 import re
 
-from . import objects, params
+from . import objects, params, props
 from .server import CommandError
 from .song import find_scene, undo_step
 
 TRACK_KINDS = ("midi", "audio", "return")
+
+# Track and mixer properties beyond name/mute/solo/arm/volume/pan/sends.
+TRACK_PROPS = [
+    props.prop(
+        "monitoring",
+        "current_monitoring_state",
+        "enum",
+        choices={"In": 0, "Auto": 1, "Off": 2},
+    ),
+    props.prop("folded", "fold_state", "bool"),
+    props.prop("implicit_arm", "implicit_arm", "bool"),
+]
+TRACK_FACTS = [
+    props.prop("color_index", "color_index", "int", readonly=True),
+    props.prop("can_be_armed", "can_be_armed", "bool", readonly=True),
+    props.prop("is_frozen", "is_frozen", "bool", readonly=True),
+    props.prop("is_visible", "is_visible", "bool", readonly=True),
+    props.prop("playing_slot_index", "playing_slot_index", "int", readonly=True),
+    props.prop("fired_slot_index", "fired_slot_index", "int", readonly=True),
+]
+MIXER_PROPS = [
+    props.prop(
+        "crossfade",
+        "crossfade_assign",
+        "enum",
+        choices={"A": 0, "None": 1, "B": 2},
+        choices_attr="crossfade_assignments",
+    ),
+    props.prop(
+        "panning_mode",
+        "panning_mode",
+        "enum",
+        choices={"Stereo": 0, "Split Stereo": 1},
+        choices_attr="panning_modes",
+    ),
+]
 
 
 def create_track(song, p):
@@ -64,12 +100,37 @@ def update_track(song, p):
         for key, attr in (
             ("input", "input_routing_type"),
             ("output", "output_routing_type"),
+            ("input_channel", "input_routing_channel"),
+            ("output_channel", "output_routing_channel"),
         ):
             if p.get(key) not in (None, ""):
                 results.append(_set_routing(track, key, attr, str(p[key])))
+        for field, attr, convert in (
+            ("pan_left", "left_split_stereo", _pan),
+            ("pan_right", "right_split_stereo", _pan),
+            ("cue_volume", "cue_volume", _db),
+            ("crossfader", "crossfader", _number_or_text),
+        ):
+            key = field + "_db" if field == "cue_volume" else field
+            if p.get(key) in (None, ""):
+                continue
+            param = props.get(mixer, attr, None)
+            if param is None:
+                results.append({"field": field, "error": "this track does not have it"})
+            else:
+                results.append(_set_param(field, param, convert(p[key])))
+        results.extend(props.write(track, TRACK_PROPS, p))
+        results.extend(props.write(mixer, MIXER_PROPS, p))
     if not results:
         raise CommandError("bad_params", "nothing to change: give at least one field")
     return {"track": path, "name": track.name, "results": results}
+
+
+def track_settings(track):
+    """What read_track shows beyond the basics: monitoring, crossfade, freezing."""
+    out = props.read(track, TRACK_PROPS + TRACK_FACTS)
+    out.update(props.read(props.get(track, "mixer_device", None), MIXER_PROPS))
+    return out
 
 
 def delete(song, p):
@@ -249,6 +310,14 @@ def _sends(raw):
             return [raw]
         return [{"return": k, "db": v} for k, v in raw.items()]
     return [s for s in raw if isinstance(s, dict)]
+
+
+def _number_or_text(value):
+    """A number stays a raw value (-1 is A, 1 is B); other text is passed on."""
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return str(value)
 
 
 def _db(value):

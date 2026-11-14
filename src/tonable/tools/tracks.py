@@ -33,7 +33,8 @@ def read_track(track: TrackAddress) -> dict:
     output routing, the device tree with rack chains and Drum Rack pads, Session
     clips by slot, and Arrangement clips.
 
-    Every device comes with its address (t1/d0/c0/d1) for read_device. Works for
+    Every device comes with its address (t1/d0/c0/d1) for read_device. Also shows
+    monitoring, crossfader assignment, freeze state and the playing slot. Works for
     return tracks (rA) and the master (m) too.
     """
     return call("read_track", {"track": track})
@@ -71,8 +72,22 @@ def update_track(
     color_index: text("Live's color number. Empty: unchanged.") = "",
     input: text("Input routing by the name Live shows, e.g. All Ins.") = "",
     output: text("Output routing by the name Live shows, e.g. Master.") = "",
+    input_channel: text("Input channel by the name Live shows, e.g. 1/2.") = "",
+    output_channel: text("Output channel by the name Live shows, e.g. 1/2.") = "",
+    monitoring: text("Monitoring: In, Auto or Off.") = "",
+    crossfade: text("Crossfader assignment: A, None or B.") = "",
+    panning_mode: text("Stereo or Split Stereo.") = "",
+    pan_left: text("Split stereo: left pan, like pan (e.g. 25L).") = "",
+    pan_right: text("Split stereo: right pan, like pan (e.g. 30R).") = "",
+    folded: text("Group track: true folds it, false opens it.") = "",
+    implicit_arm: text("Implicit arm (Push-style arm): true / false.") = "",
+    cue_volume_db: text("Master only: the cue/preview volume in dB.") = "",
+    crossfader: text("Master only: crossfader position -1 (A) to 1 (B).") = "",
 ) -> dict:
-    """Change a track's name, color, volume, pan, sends, mute, solo, arm or routing.
+    """Change a track's name, color, volume, pan (or split-stereo pans), sends,
+    mute, solo, arm, monitoring, crossfader assignment, group folding or routing
+    (input and output, with channels). On the master it also sets the cue volume
+    and crossfader.
 
     Only the fields you give change, each with its own result line ("now" shows
     what Live displays afterwards; a field that fails says why and the others still
@@ -92,6 +107,17 @@ def update_track(
             "color_index": color_index,
             "input": input,
             "output": output,
+            "input_channel": input_channel,
+            "output_channel": output_channel,
+            "monitoring": monitoring,
+            "crossfade": crossfade,
+            "panning_mode": panning_mode,
+            "pan_left": pan_left,
+            "pan_right": pan_right,
+            "folded": folded,
+            "implicit_arm": implicit_arm,
+            "cue_volume_db": cue_volume_db,
+            "crossfader": crossfader,
         },
     )
 

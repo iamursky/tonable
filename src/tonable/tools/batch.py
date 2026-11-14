@@ -8,7 +8,7 @@ from tonable.server import call, mcp
 from tonable.tools import changes, empty_to, objects_list
 
 # Commands that may walk the browser get Live's long timeout.
-LONG = {"find_in_library", "load_device"}
+LONG = {"find_in_library", "load_device", "app"}
 
 ACTION_SCHEMA = {
     "type": "object",

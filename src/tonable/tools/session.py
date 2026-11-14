@@ -58,11 +58,37 @@ def update_set(
         "Key root for Live's scale mode: C, F#, Bb. Empty: unchanged."
     ) = "",
     scale: text("Scale name as Live shows it: Major, Minor, Dorian...") = "",
+    scale_mode: text("Highlight scale notes in the MIDI editor: true / false.") = "",
+    record: text("Arrangement record on or off: true / false.") = "",
+    overdub: text("Arrangement overdub on or off: true / false.") = "",
+    session_record: text("Session record on or off: true / false.") = "",
+    automation_arm: text("Automation arm (session automation record).") = "",
+    punch_in: text("Punch in: true / false.") = "",
+    punch_out: text("Punch out: true / false.") = "",
+    groove_amount: text("Global groove amount, 0 = off, 1 = 100 %.") = "",
+    swing_amount: text("Swing amount 0-1 (older global swing).") = "",
+    clip_trigger_quantization: text(
+        "Global launch quantization: None, 8 Bars, 4 Bars, 2 Bars, 1 Bar, 1/2, "
+        "1/2T, 1/4, 1/4T, 1/8, 1/8T, 1/16, 1/16T, 1/32."
+    ) = "",
+    midi_recording_quantization: text(
+        "Record quantization: None, 1/4, 1/8, 1/8T, 1/8 + 1/8T, 1/16, 1/16T, "
+        "1/16 + 1/16T, 1/32."
+    ) = "",
+    count_in: text("Count-in before recording: None, 1 Bar, 2 Bars, 4 Bars.") = "",
+    select_on_launch: text("Select a clip when it is launched: true / false.") = "",
+    exclusive_arm: text("Arming one track disarms the others: true / false.") = "",
+    exclusive_solo: text("Soloing one track unsolos the others: true / false.") = "",
+    link: text("Ableton Link on or off: true / false.") = "",
+    link_start_stop_sync: text("Link start/stop sync: true / false.") = "",
 ) -> dict:
-    """Change the Set's tempo, time signature, Arrangement loop, metronome or key.
+    """Change the Set's tempo, time signature, Arrangement loop, metronome, key,
+    recording state (record, overdub, session record, punch, count-in, quantization),
+    groove amount, Link and track-arming rules.
 
-    Only the fields you give change; the answer shows the Set's state afterwards.
-    One undo step.
+    Only the fields you give change; the answer shows the Set's state afterwards,
+    with one result line for each recording or behavior field (Live keeps the old
+    value for a setting it refuses, and the line says so). One undo step.
     """
     return call(
         "update_set",
@@ -75,6 +101,23 @@ def update_set(
             "metronome": metronome,
             "root_note": root_note,
             "scale": scale,
+            "scale_mode": scale_mode,
+            "record": record,
+            "overdub": overdub,
+            "session_record": session_record,
+            "automation_arm": automation_arm,
+            "punch_in": punch_in,
+            "punch_out": punch_out,
+            "groove_amount": groove_amount,
+            "swing_amount": swing_amount,
+            "clip_trigger_quantization": clip_trigger_quantization,
+            "midi_recording_quantization": midi_recording_quantization,
+            "count_in": count_in,
+            "select_on_launch": select_on_launch,
+            "exclusive_arm": exclusive_arm,
+            "exclusive_solo": exclusive_solo,
+            "link": link,
+            "link_start_stop_sync": link_start_stop_sync,
         },
     )
 
@@ -87,24 +130,41 @@ def transport(
             "stop",
             "continue",
             "fire_clip",
+            "stop_clip",
             "stop_track",
             "fire_scene",
             "stop_all_clips",
             "jump",
+            "jump_by",
+            "next_locator",
+            "previous_locator",
+            "jump_in_clip",
+            "play_selection",
+            "tap_tempo",
+            "capture_midi",
+            "trigger_session_record",
+            "back_to_arranger",
             "re_enable_automation",
         ],
         Field(description="What to do; see the tool description."),
     ],
-    track: text("For fire_clip and stop_track: t0, t1...") = "",
-    slot: text("For fire_clip: the slot (scene row) from 0.") = "",
+    track: text("For fire_clip, stop_clip, stop_track, jump_in_clip: t0, t1...") = "",
+    slot: text("For fire_clip and stop_clip: the slot (scene row) from 0.") = "",
     scene: text("For fire_scene: scene number from 0 or its exact name.") = "",
-    time_beats: text("For jump: song position in beats.") = "",
+    time_beats: text(
+        "For jump: song position in beats. For jump_by: beats to move (negative "
+        "goes back). For jump_in_clip: beats to jump inside the playing clip."
+    ) = "",
     locator: text("For jump: a locator name instead of time_beats.") = "",
 ) -> dict:
-    """Play, stop or continue; launch a clip (fire_clip track+slot) or a scene
-    (fire_scene); stop one track's clips (stop_track) or all clips; jump to a time
-    in beats or to a locator; re_enable_automation after a parameter was moved by
-    hand or by set_device_params.
+    """Play, stop or continue; launch a clip (fire_clip track+slot, also records
+    into an empty slot of an armed track) or a scene (fire_scene); stop one clip
+    (stop_clip), one track's clips (stop_track) or all clips; jump to a time in
+    beats (jump), by a distance (jump_by), to a locator, or to the next or previous
+    locator; jump_in_clip inside the clip a track is playing; play_selection;
+    tap_tempo; capture_midi (keep what was just played); trigger_session_record;
+    back_to_arranger (leave Session playback); re_enable_automation after a
+    parameter was moved by hand or by set_device_params.
     """
     return call(
         "transport",
@@ -145,10 +205,11 @@ def scene(
     name: text("New name.") = "",
     tempo: text("Scene tempo in BPM, or off. Empty: unchanged.") = "",
     color_index: text("Live's color number. Empty: unchanged.") = "",
+    time_signature: text("Scene time signature such as 3/4, or off.") = "",
 ) -> dict:
-    """Create a scene, rename it or set its tempo and color, duplicate it, or capture
-    the playing clips into a new scene. Delete scenes with delete (target s2).
-    Launch one with transport fire_scene. One undo step.
+    """Create a scene, rename it or set its tempo, time signature and color,
+    duplicate it, or capture the playing clips into a new scene. Delete scenes with
+    delete (target s2). Launch one with transport fire_scene. One undo step.
     """
     return call(
         "scene",
@@ -159,5 +220,6 @@ def scene(
             "name": name,
             "tempo": tempo,
             "color_index": color_index,
+            "time_signature": time_signature,
         },
     )

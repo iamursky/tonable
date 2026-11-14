@@ -1,6 +1,6 @@
 [project]
 name = "tonable"
-version = "0.5.2"
+version = "0.6.0"
 description = "MCP server for Ableton Live 12: presets, devices, clips, envelopes and scenes"
 readme = "README.md"
 requires-python = ">=3.11"

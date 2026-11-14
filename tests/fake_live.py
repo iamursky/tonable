@@ -203,6 +203,10 @@ class Note:
         self.duration = spec.duration
         self.velocity = spec.velocity
         self.mute = spec.mute
+        # Live 12 notes also carry these; a spec without them gets Live's defaults.
+        self.probability = getattr(spec, "probability", 1.0)
+        self.velocity_deviation = getattr(spec, "velocity_deviation", 0.0)
+        self.release_velocity = getattr(spec, "release_velocity", 64.0)
 
 
 class MidiClip:

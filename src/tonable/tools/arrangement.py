@@ -16,8 +16,10 @@ def arrangement(
             "list",
             "place_scene",
             "copy_clip",
+            "move_clip",
             "create_clip",
             "delete_clip",
+            "add_take_lane",
             "add_locator",
             "rename_locator",
             "delete_locator",
@@ -27,8 +29,14 @@ def arrangement(
     at_bar: text("Where: bar number from 1, as Live shows it (17 = bar 17).") = "",
     at_beats: text("Where, in beats from the start, instead of at_bar.") = "",
     scene: text("For place_scene: scene number from 0 or its exact name.") = "",
-    track: text("For copy_clip, create_clip, delete_clip: t0, t1...") = "",
+    track: text(
+        "For copy_clip, create_clip, delete_clip, add_take_lane: t0, t1..."
+    ) = "",
     slot: text("For copy_clip: the Session slot to copy, from 0.") = "",
+    clip: text(
+        "For copy_clip and move_clip: a clip address instead of track and slot: "
+        "t0/s2 (Session) or t0/a1 (a timeline clip from action list)."
+    ) = "",
     length_beats: text("For create_clip: length in beats. Empty: fit the notes.") = "",
     notes: objects_list("For create_clip: notes, as in write_clip.", NOTE_SCHEMA) = [],  # noqa: B006 - pydantic copies defaults
     name: text(
@@ -40,10 +48,12 @@ def arrangement(
 
     list: clips per track, locators, loop. place_scene: copy every clip of a Session
     scene to the timeline at a bar, in one undo step (envelopes come along as track
-    automation). copy_clip: one Session clip to a bar. create_clip: a MIDI clip on
-    the timeline with notes. delete_clip: by track, start and name. add_locator,
-    rename_locator, delete_locator. Times answer as bar|beat ("17|1") and beats.
-    Live cannot read Arrangement automation back.
+    automation). copy_clip: one Session or timeline clip to a bar. move_clip: a
+    timeline clip (t0/a1) to another bar. create_clip: a MIDI clip on the timeline
+    with notes (audio: create_audio_clip). delete_clip: by track, start and name.
+    add_take_lane. add_locator, rename_locator, delete_locator. list shows each
+    clip's address, type and the take lanes. Times answer as bar|beat ("17|1") and
+    beats. Live cannot read Arrangement automation back.
     """
     return call(
         "arrangement",
@@ -54,6 +64,7 @@ def arrangement(
             "scene": scene,
             "track": track,
             "slot": slot,
+            "clip": clip,
             "length_beats": length_beats,
             "notes": notes,
             "name": name,

@@ -17,7 +17,10 @@ Call live_status first: it says whether Live is connected and what Set is open.
 Addresses: t0 is the first track (numbers from 0), rA return track A, m the master.
 Devices: t0/d0 first device; inside racks t0/d0/c1/d0 (chain 1, device 0);
 Drum Rack pads t0/d0/pC1 (note names with C3 = MIDI 60).
+Clips: t0/s2 is the Session clip in slot 2 of t0, t0/a1 the second timeline clip.
 Times are in beats (quarter notes) unless a field says bars.
+Every write is read back: a result line with "error" means Live kept the old value.
+Use the dedicated tools first; live_api reaches the rest of Live's object model.
 Read before you change anything, and quote the address and name to the user.
 If a call fails with code not_running, tell the user to choose Tonable in Live's
 Settings -> Link, Tempo & MIDI -> Control Surface.
@@ -68,11 +71,17 @@ def run():
 
 # Importing the modules registers their tools on `mcp`.
 from tonable.tools import (  # noqa: E402, F401
+    application,
     arrangement,
     batch,
+    clipprops,
     clips,
+    conversions,
     devices,
     envelopes,
+    grooves,
+    liveapi,
     session,
+    specialized,
     tracks,
 )

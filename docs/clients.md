@@ -128,7 +128,7 @@ socket inside Live is private bridge traffic, not an MCP URL. Keep it local.
 
 1. Run `tonable --version` and `tonable doctor`, or invoke those commands with
    the same uvx launcher. Add `--user-library PATH` to `doctor` for a custom path.
-2. Connect the client and confirm `tools/list` returns 24 Tonable tools.
+2. Connect the client and confirm `tools/list` returns 31 Tonable tools.
 3. Request `live_status`. With Tonable selected in Live it should report
    `connected: true`; otherwise it returns `connected: false` and `not_running`.
 4. Request `read_set` and compare the result with Live before making edits.

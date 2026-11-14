@@ -6,7 +6,7 @@ time (duplicate_clip_to_arrangement), so place_scene walks the tracks itself, as
 undo step. Envelopes in a Session clip become track automation on its span.
 """
 
-from . import clips, objects
+from . import clipref, clips, objects, props
 from .server import CommandError
 from .song import find_scene, undo_step
 
@@ -14,8 +14,10 @@ ACTIONS = (
     "list",
     "place_scene",
     "copy_clip",
+    "move_clip",
     "create_clip",
     "delete_clip",
+    "add_take_lane",
     "add_locator",
     "rename_locator",
     "delete_locator",
@@ -31,8 +33,10 @@ def arrangement(song, p):
     handler = {
         "place_scene": _place_scene,
         "copy_clip": _copy_clip,
+        "move_clip": _move_clip,
         "create_clip": _create_clip,
         "delete_clip": _delete_clip,
+        "add_take_lane": _add_take_lane,
         "add_locator": _add_locator,
         "rename_locator": _rename_locator,
         "delete_locator": _delete_locator,
@@ -53,10 +57,15 @@ def _list(song):
     tracks = []
     for t, track in enumerate(song.tracks):
         found = [
-            _clip_out(song, c) for c in getattr(track, "arrangement_clips", []) or []
+            _clip_out(song, c, f"t{t}/a{i}")
+            for i, c in enumerate(getattr(track, "arrangement_clips", []) or [])
         ]
-        if found:
-            tracks.append({"track": f"t{t}", "name": track.name, "clips": found})
+        lanes = _take_lanes(track)
+        if found or lanes:
+            entry = {"track": f"t{t}", "name": track.name, "clips": found}
+            if lanes:
+                entry["take_lanes"] = lanes
+            tracks.append(entry)
     return {
         "time_signature": f"{song.signature_numerator}/{song.signature_denominator}",
         "tracks": tracks,
@@ -91,7 +100,8 @@ def _place_scene(song, p):
 
 
 def _copy_clip(song, p):
-    track, slot, where = clips._slot(song, p.get("track"), p.get("slot"))
+    """A Session clip (track + slot, or clip t0/s2) or a timeline clip (clip t0/a1)."""
+    track, slot, where = clipref.resolve(song, p)
     if not slot.has_clip:
         raise CommandError("not_found", f"{where} is empty")
     at = _time(song, p)
@@ -100,6 +110,43 @@ def _copy_clip(song, p):
         "copied": where,
         "clip": _clip_out(song, copy) if copy is not None else None,
     }
+
+
+def _move_clip(song, p):
+    """Move a timeline clip: copy it to the new time, then delete the original.
+
+    The copy replaces any clips under its new span (as place_scene does), so a move
+    that would land on the clip's own old span is refused; copy_clip first instead.
+    """
+    ref = clipref.locate(song, p.get("clip"))
+    if ref.kind != "arrangement":
+        raise CommandError("bad_target", "move_clip needs a timeline clip: t0/a1")
+    at = _time(song, p)
+    clip, track = ref.clip, ref.track
+    start, end = clip.start_time, clip.end_time
+    if at == start:
+        return {"moved": ref.path, "unchanged": True}
+    if at < end and at + (end - start) > start:
+        raise CommandError(
+            "overlap", "the new place overlaps the clip's own span: move it further"
+        )
+    name = clip.name
+    copy = track.duplicate_clip_to_arrangement(clip, at)
+    track.delete_clip(clip)
+    return {
+        "moved": {"from": _time_out(song, start), "clip": name},
+        "clip": _clip_out(song, copy) if copy is not None else None,
+    }
+
+
+def _add_take_lane(song, p):
+    track = objects.track(song, p.get("track") or "")
+    path = objects.track_path(song, track)
+    create = getattr(track, "create_take_lane", None)
+    if not path.startswith("t") or create is None:
+        raise CommandError("not_supported", f"{path}: this Live cannot add take lanes")
+    create()
+    return {"track": path, "take_lanes": _take_lanes(track)}
 
 
 def _create_clip(song, p):
@@ -212,13 +259,38 @@ def _time_out(song, beats):
     return {"bar_beat": bar_beat(song, beats), "beats": beats}
 
 
-def _clip_out(song, clip):
-    return {
-        "name": clip.name,
-        "start": bar_beat(song, clip.start_time),
-        "start_beats": clip.start_time,
-        "end_beats": clip.end_time,
-    }
+def _clip_out(song, clip, address=None):
+    out = {}
+    if address:
+        out["address"] = address
+    out.update(
+        {
+            "name": clip.name,
+            "start": bar_beat(song, clip.start_time),
+            "start_beats": clip.start_time,
+            "end_beats": clip.end_time,
+        }
+    )
+    kind = props.get(clip, "is_midi_clip", None)
+    if kind is not None:
+        out["type"] = "midi" if kind else "audio"
+    if props.get(clip, "muted", False):
+        out["muted"] = True
+    return out
+
+
+def _take_lanes(track):
+    lanes = props.get(track, "take_lanes", None)
+    if not lanes:
+        return []
+    return [
+        {
+            "index": i,
+            "name": props.get(lane, "name", ""),
+            "clips": len(list(props.get(lane, "arrangement_clips", []) or [])),
+        }
+        for i, lane in enumerate(lanes)
+    ]
 
 
 def _locator_out(song, cue):

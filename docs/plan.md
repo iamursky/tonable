@@ -1,6 +1,6 @@
 # Architecture and implementation notes
 
-This document describes Tonable 0.5.2. It replaces early planning notes with the
+This document describes Tonable 0.6.0. It replaces early planning notes with the
 implemented design. See [tools](tools.md) for the public API and
 [client setup](clients.md) for integration.
 
@@ -65,6 +65,24 @@ Parameter conversion uses Live's display strings and reports the actual applied
 value. Envelope events are written from the last time backward so segment ends
 exist before curve coefficients are set. Coincident events preserve jump order;
 readback accounts for Live's float32 event times.
+
+## Property tables and clip addresses
+
+Most Live properties are plain values (a clip's launch mode, the Set's record
+mode). `props.py` lists them as table rows (name, Live attribute, kind, range,
+enum choices) and `props.write` converts, writes, reads the value back and reports
+what Live holds. Enum labels come from the object's own `*_list` when it has one.
+A refused or silently reverted write becomes an error line for that field only.
+
+Clip tools accept `clip` addresses (`clipref.py`): `t0/s2` is a Session clip and
+`t0/a1` a timeline clip. The older `track` + `slot` form still works. The command
+table reloads modules in dependency order (`dispatch.MODULES`); a test checks that
+every module in `remote_script/Tonable` is listed.
+
+`live_api` is the escape hatch for the rest of the object model. Its boundary is
+structural: it walks only from `song`, `app` or a Tonable address, only through
+objects whose class belongs to Live, never through names starting with `_`, and
+writes need `write: true`.
 
 ## Libraries and installation
 

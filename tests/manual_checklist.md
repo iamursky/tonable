@@ -12,7 +12,7 @@ else controlling Live: its undo history is shared.
    then run `tonable install --replace`. Restart Live, select Tonable as a Control
    Surface (Input and Output: None), and run `tonable doctor`. For a custom
    library, pass `--user-library PATH` to installation and doctor.
-2. Reconnect Tonable in your MCP client so it discovers the current 24 tools.
+2. Reconnect Tonable in your MCP client so it discovers the current 31 tools.
 3. Call `live_status` and `read_set`; compare the result with Live.
 
 ## Editing checks
@@ -37,6 +37,51 @@ else controlling Live: its undo history is shared.
   visually in Live; it cannot be read back through the API.
 - `inspect_preset_file`: inspect a permitted `.adg`/`.adv`; reject a file outside
   the supported library roots.
+
+## Checks for the 0.6 additions
+
+None of these has run in Live yet; they were written against a stand-in. For every
+write, compare the `now` value in the answer with what Live shows, and treat any
+`error` line saying Live kept the old value as a finding, not a failure of the check.
+
+- `live_api`: `info` on `song`. If it answers `not a Live object`, the assumption
+  that Live's classes report a module starting with `Live` is wrong; record the
+  module name from `live_api` `info`. Then `get` `tempo`; `set` without `write`
+  must be refused; `set` with `write: true` and `call` of a `delete_*` method
+  without `confirm` must be refused.
+- `update_set`: `record`, `overdub`, `count_in`, `clip_trigger_quantization`,
+  `midi_recording_quantization`, `groove_amount`. Check that each label maps to the
+  value Live shows (the numbers are from memory of the Object Model).
+- `transport`: `jump_by` (negative too), `next_locator`, `previous_locator`,
+  `tap_tempo`, `capture_midi` after playing a few notes, `stop_clip`,
+  `back_to_arranger` while a Session clip plays.
+- `update_track`: `monitoring`, `crossfade`, `panning_mode` with `pan_left` and
+  `pan_right`, `folded` on a group, `input_channel`, and `cue_volume_db` and
+  `crossfader` on `m`.
+- `scene`: set `time_signature` to `3/4`, then `off`.
+- `write_clip` with `probability`, `velocity_deviation` and `release_velocity`;
+  `read_clip` returns them; `edit_notes` `probability`, `mute`, `unmute`.
+- `update_clip` on a MIDI and an audio clip: launch mode and quantization labels,
+  all follow-action fields (which exist depends on the Live version), loop and
+  marker changes in both orders, `time_signature`, `groove` (after `groove` list),
+  `warp_mode` (an unavailable mode must be refused), `gain`, `pitch_coarse`,
+  actions `quantize`, `crop`, `clear_envelopes`, and warp marker add, move, remove.
+- `create_audio_clip`: a Session slot and a bar on the timeline; a MIDI track and a
+  non-audio file must be refused.
+- `read_clip`, `write_clip` and `edit_notes` on a timeline clip (`t0/a0`).
+- `arrangement`: `list` shows addresses and take lanes; `copy_clip` and `move_clip`
+  on a timeline clip (`move_clip` onto its own span must be refused); `add_take_lane`.
+- `convert_audio`: `audio_to_midi` for drums, melody and harmony on a short audio
+  clip, `to_simpler`, `to_drum_rack`, `slices_to_drum_rack`. Read the track list
+  after each; the new track appears a moment after the answer.
+- `configure_device`: call it with only a target on a Simpler, Wavetable, Drift,
+  Compressor, EQ Eight and a Drum Rack pad. Change one setting on each and check
+  Live. Members listed as unverified in `specialized.py` (Looper, the Simpler sample
+  child, `selected_band`, chain properties) need particular attention.
+- `app`: `info`, `select` a track and a device, `show_view` / `hide_view` for
+  Browser and Detail, `preview` a library sound and `stop_preview`.
+- `groove`: `list`, then `update` one groove's `timing_amount` and the Set's
+  `groove_amount`.
 
 Stop playback, remove test tracks and locators, and check `arrangement list` for
 leftovers. Close the disposable Set without saving if it is no longer needed.

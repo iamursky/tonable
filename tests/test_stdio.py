@@ -25,7 +25,7 @@ def test_stdio_initialization_discovery_and_disconnected_status(tmp_path):
                 assert initialized.serverInfo.name == "tonable"
                 assert initialized.serverInfo.version == tonable.__version__
                 tools = await client.list_tools()
-                assert len(tools.tools) == 24
+                assert len(tools.tools) == 31
                 assert "read_set" in {tool.name for tool in tools.tools}
                 result = await client.call_tool("live_status", {})
                 assert not result.isError
