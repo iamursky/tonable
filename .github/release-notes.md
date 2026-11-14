@@ -1,4 +1,12 @@
-Tonable connects a local MCP client to Ableton Live 12.4+ through 24 tools.
+Tonable connects a local MCP client to Ableton Live 12.4+ through 31 tools.
+
+New in 0.6.0: clip settings, follow actions and warp, audio clips and audio-to-MIDI
+conversion, device-specific settings (Simpler, Wavetable, Drift, Compressor sidechain
+and others), Set recording and quantization state, extra transport actions, timeline
+clip moves and take lanes, interface and groove tools, and a guarded `live_api` for
+the rest of Live's object model. These additions were tested only against a stand-in
+for Live's API, not in Live itself: repeat the manual checklist in a disposable Set
+before relying on them.
 
 This release includes a Python wheel and source archive. No repository checkout
 is needed: use `uvx --python 3.11 --from <wheel-path-or-URL> tonable serve`, or
@@ -11,7 +19,7 @@ add `--reload`.
 
 CI checks Python 3.11 and 3.13 on Linux and macOS, builds and validates both
 archives, tests the extracted source, and checks installation and discovery of
-24 MCP tools outside the checkout. These are synthetic tests; they do not replace
+31 MCP tools outside the checkout. These are synthetic tests; they do not replace
 manual checks in a disposable Live Set. The Live workflow is validated on macOS;
 Windows Live support remains unverified.
 

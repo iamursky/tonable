@@ -18,7 +18,7 @@ reusable workflow for releases.
   production Remote Script resources and both MIT notice files.
 - Full tests from the extracted sdist on Python 3.11, outside the checkout.
 - Clean-environment wheel installation, entry points, temporary-library component
-  installation/replacement/removal, `uvx` launch and discovery of 24 MCP tools.
+  installation/replacement/removal, `uvx` launch and discovery of 31 MCP tools.
 - A `python-distributions` artifact retained for 30 days, uploaded only after all
   checks pass.
 
@@ -43,11 +43,11 @@ is a version tag. Dispatching it on a branch fails before publication.
    in the README and client instructions, plus the release notes in
    `.github/release-notes.md`.
 2. Merge the reviewed candidate into `main` and wait for CI to pass.
-3. Tag that exact commit with `v<version>` and push only that tag. For 0.5.2:
+3. Tag that exact commit with `v<version>` and push only that tag. For 0.6.0:
 
    ```sh
-   git tag -a v0.5.2 <approved-commit> -m 'Tonable 0.5.2'
-   git push origin refs/tags/v0.5.2
+   git tag -a v0.6.0 <approved-commit> -m 'Tonable 0.6.0'
+   git push origin refs/tags/v0.6.0
    ```
 
 4. Release checks that the tag equals the package version and its commit is on
@@ -62,7 +62,7 @@ is a version tag. Dispatching it on a branch fails before publication.
    `contents: write`.
 7. A final job compares PyPI's hashes with the tested artifacts, then launches
    `tonable==<version>` from the public registry in a clean temporary home and
-   confirms discovery of all 24 tools. No registry-install claim relies only on
+   confirms discovery of all 31 tools. No registry-install claim relies only on
    a successful upload response.
 
 Do not move a published tag or replace release assets. Fix a released package by
@@ -95,7 +95,7 @@ to version tags. Then enable the repository variable:
 
 ```sh
 gh variable set PYPI_PUBLISH_ENABLED --repo iamursky/tonable --body true
-gh workflow run release.yml --repo iamursky/tonable --ref v0.5.2
+gh workflow run release.yml --repo iamursky/tonable --ref v0.6.0
 ```
 
 The dispatch reruns validation and verifies existing GitHub assets before the
@@ -105,12 +105,12 @@ reject an unavailable name. See the official
 [pending-publisher guide](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/)
 and [publishing workflow guide](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
 
-After upload, verify version 0.5.2 at
-[PyPI](https://pypi.org/project/tonable/0.5.2/), compare its file hashes with the
+After upload, verify version 0.6.0 at
+[PyPI](https://pypi.org/project/tonable/0.6.0/), compare its file hashes with the
 GitHub release, and test the registry command from outside the checkout:
 
 ```sh
-uvx --python 3.11 --from 'tonable==0.5.2' tonable --version
+uvx --python 3.11 --from 'tonable==0.6.0' tonable --version
 ```
 
 Only then advertise registry installation. Until then, use the versioned GitHub
@@ -128,8 +128,8 @@ uv build
 uvx --from twine==7.0.0 twine check --strict dist/*
 uv run python scripts/check_sdist.py --python 3.11
 uv run python scripts/check_distribution.py \
-  --wheel dist/tonable-0.5.2-py3-none-any.whl \
-  --sdist dist/tonable-0.5.2.tar.gz --python 3.11
+  --wheel dist/tonable-0.6.0-py3-none-any.whl \
+  --sdist dist/tonable-0.6.0.tar.gz --python 3.11
 ```
 
 Start with a fresh `dist/` containing only the candidate version. Build output is
